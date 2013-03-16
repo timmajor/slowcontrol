@@ -1,0 +1,25 @@
+function (newDoc, oldDoc, userCtx, secObj) {
+//  var v = require("lib/validate").init(newDoc, oldDoc, userCtx, secObj);
+/*  
+  for (var card=0; card<newDoc.cards.length; card++) {
+    for (var channel=0; channel<newDoc.cards[card].channels.length; channel++){
+      if (newDoc.cards[card].channels[channel].hi){
+        if (newDoc.cards[card].channels[channel].lo >= newDoc.cards[card].channels[channel].hi){
+          v.unauthorized("IOS "+ newDoc.ios +" not saved: lo>hi.");
+        }
+        if (newDoc.cards[card].channels[channel].lolo > newDoc.cards[card].channels[channel].lo){
+          v.unauthorized("IOS "+ newDoc.ios +" not saved: lolo>lo.");
+        }
+        if (newDoc.cards[card].channels[channel].hi > newDoc.cards[card].channels[channel].hihi){
+          v.unauthorized("IOS "+ newDoc.ios +" not saved: hi>hihi.");
+        }
+      }
+    }
+  }
+*/
+
+
+  if (!v.isAdmin() && false){
+    v.unauthorized("Log in as expert");
+  }
+}
