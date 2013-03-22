@@ -3,8 +3,8 @@ $.couch.app(function(app) {
   var approvedThresholdData=[];
   var filledThresholdData=[];
   var presentData=[];
-  var path="http://couch.snopl.us";
-  var channeldb="/slowcontrol-channeldb/_design/slowcontrol";
+  var path="http://127.0.0.1:5984";
+  var channeldb="/slowcontrol/_design/slowcontrol";
   var datadb="/slowcontrol-data-5sec/_design/slowcontrol-data-5sec";
   var options="?descending=true&limit=1";
   var sizes={
@@ -15,11 +15,11 @@ $.couch.app(function(app) {
           {"card":"cardA",
             "channels":20
           },
-          {"card":"cardB",
+          {"card":"cardC",
             "channels":20
           },
           {"card":"cardD",
-            "channels":32
+            "channels":20
           }
         ]
       },
@@ -34,9 +34,6 @@ $.couch.app(function(app) {
           },
           {"card":"cardC",
             "channels":20
-          },
-          {"card":"cardD",
-            "channels":20
           }
         ]
       },
@@ -44,30 +41,7 @@ $.couch.app(function(app) {
         "ios":3,
         "cards":[
           {"card":"cardA",
-            "channels":20
-          },
-          {"card":"cardB",
-            "channels":20
-          },
-          {"card":"cardC",
-            "channels":20
-          }
-        ]
-      },
-      {
-        "ios":4,
-        "cards":[
-          {"card":"cardA",
-            "channels":20
-          },
-          {"card":"cardB",
-            "channels":20
-          },
-          {"card":"cardC",
-            "channels":20
-          },
-          {"card":"cardD",
-            "channels":20
+            "channels":32
           }
         ]
       }
@@ -196,16 +170,13 @@ $.couch.app(function(app) {
         presentThresholdData[1]=result2.rows[0].value;
         $.getJSON(path+channeldb+"/_view/recent3"+options,function(result3){
           presentThresholdData[2]=result3.rows[0].value;
-          $.getJSON(path+channeldb+"/_view/recent4"+options,function(result4){
-            presentThresholdData[3]=result4.rows[0].value;
-            $("#statustext").text("Done.");
-            if (fill){
-              fillThresholds(presentThresholdData);
-            }
-            else{
-              showThresholds(presentThresholdData, true);
-            }
-          });
+          $("#statustext").text("Done.");
+          if (fill){
+            fillThresholds(presentThresholdData);
+          }
+          else{
+            showThresholds(presentThresholdData, true);
+          }
         });
       });
     });
@@ -219,16 +190,13 @@ $.couch.app(function(app) {
         approvedThresholdData[1]=result2.rows[0].value;
         $.getJSON(path+channeldb+"/_view/recent_approved3"+options,function(result3){
           approvedThresholdData[2]=result3.rows[0].value;
-          $.getJSON(path+channeldb+"/_view/recent_approved4"+options,function(result4){
-            approvedThresholdData[3]=result4.rows[0].value;
-            $("#statustext").text("Done.");
-            if (fill){
-              fillThresholds(approvedThresholdData);
-            }
-            else{
-              showThresholds(approvedThresholdData, false);
-            }
-          });
+          $("#statustext").text("Done.");
+          if (fill){
+            fillThresholds(approvedThresholdData);
+          }
+          else{
+            showThresholds(approvedThresholdData, false);
+          }
         });
       });
     });
@@ -242,11 +210,8 @@ $.couch.app(function(app) {
         presentData[1]=result2.rows[0].value;
         $.getJSON(path+datadb+"/_view/recent3"+options,function(result3){
           presentData[2]=result3.rows[0].value;
-          $.getJSON(path+datadb+"/_view/recent4"+options,function(result4){
-            presentData[3]=result4.rows[0].value;
-            $("#statustext").text("Done.");
-            fillValues(presentData);
-          });
+          $("#statustext").text("Done.");
+          fillValues(presentData);
         });
       });
     });

@@ -13,11 +13,11 @@ function(doc, req) {
           {"card":"cardA",
             "channels":20
           },
-          {"card":"cardB",
+          {"card":"cardC",
             "channels":20
           },
           {"card":"cardD",
-            "channels":32
+            "channels":20
           }
         ]
       },
@@ -32,9 +32,6 @@ function(doc, req) {
           },
           {"card":"cardC",
             "channels":20
-          },
-          {"card":"cardD",
-            "channels":20
           }
         ]
       },
@@ -42,30 +39,7 @@ function(doc, req) {
         "ios":3,
         "cards":[
           {"card":"cardA",
-            "channels":20
-          },
-          {"card":"cardB",
-            "channels":20
-          },
-          {"card":"cardC",
-            "channels":20
-          }
-        ]
-      },
-      {
-        "ios":4,
-        "cards":[
-          {"card":"cardA",
-            "channels":20
-          },
-          {"card":"cardB",
-            "channels":20
-          },
-          {"card":"cardC",
-            "channels":20
-          },
-          {"card":"cardD",
-            "channels":20
+            "channels":32
           }
         ]
       }
@@ -90,5 +64,5 @@ function(doc, req) {
   
   data.sizes=JSON.stringify(sizes);
 
-  return Mustache.to_html(ddoc.templates.detail, data);
+  return Mustache.to_html(ddoc.templates.alarms, data);
 }

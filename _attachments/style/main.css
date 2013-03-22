@@ -11,7 +11,29 @@ h1 {
 #account {
   float:right;
 }
-
+.box{
+background-color:green;
+border:1px solid #000;
+float:left;
+}
+.big{
+width:100px;
+height:61px;
+float:left;
+text-align:center;
+}
+.one{
+width:49px;
+height:25px;
+float:left;
+text-align:center;
+}
+.two{
+width:98px;
+height:25px;
+float:left;
+text-align:center;
+}
 .racks{
 width:120px;
 height:150px;
