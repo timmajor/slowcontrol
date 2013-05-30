@@ -4,5 +4,4 @@ $.couch.app(function(app) {
   $("#account").evently($.extend(true, 
     app.ddoc.vendor.couchapp.evently.account, 
     app.ddoc.evently.account), app);
-
 });

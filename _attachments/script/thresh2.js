@@ -10,85 +10,42 @@ $.couch.app(function(app) {
   var alarmdb="/slowcontrol-alarms/_design/slowcontrol-alarms";
   var options="?descending=true&limit=1";
   var checking = true;
+  var approval=false;
   var sizes={
-    "ioss":[
-      {
-        "ios":1,
-        "cards":[
-          {"card":"cardA",
-            "channels":20
-          },
-          {"card":"cardB",
-            "channels":20
-          },
-          {"card":"cardD",
-            "channels":32
-          }
-        ]
-      },
-      {
-        "ios":2,
-        "cards":[
-          {"card":"cardA",
-            "channels":20
-          },
-          {"card":"cardB",
-            "channels":20
-          },
-          {"card":"cardC",
-            "channels":20
-          },
-          {"card":"cardD",
-            "channels":20
-          }
-        ]
-      },
-      {
-        "ios":3,
-        "cards":[
-          {"card":"cardA",
-            "channels":20
-          },
-          {"card":"cardB",
-            "channels":20
-          },
-          {"card":"cardC",
-            "channels":20
-          }
-        ]
-      },
-      {
-        "ios":4,
-        "cards":[
-          {"card":"cardA",
-            "channels":20
-          },
-          {"card":"cardB",
-            "channels":20
-          },
-          {"card":"cardC",
-            "channels":20
-          },
-          {"card":"cardD",
-            "channels":20
-          }
-        ]
-      }
-    ]
+    "ioss":[]
+  };
+
+  var retrieveSizes = function(callback, callbackarg){
+    $.getJSON(path+channeldb+"/_view/recent1"+options,function(result1){
+      sizes.ioss[0]=result1.rows[0].value;
+      $.getJSON(path+channeldb+"/_view/recent2"+options,function(result2){
+        sizes.ioss[1]=result2.rows[0].value;
+        $.getJSON(path+channeldb+"/_view/recent3"+options,function(result3){
+          sizes.ioss[2]=result3.rows[0].value;
+          $.getJSON(path+channeldb+"/_view/recent4"+options,function(result4){
+            sizes.ioss[3]=result4.rows[0].value;
+            presentThresholdData=sizes.ioss;
+            if(callback){
+              if(callbackarg){
+                callback(callbackarg);
+              }
+              else{
+                callback();
+              }
+            }
+          });
+        });
+      });
+    });
   };
 
   var fillThresholds = function(thresholdData){
     filledThresholdData=thresholdData;
     $("#statustext").text("Filling thresholds...");
+    approved=true;
     for (var ios=0; ios<sizes.ioss.length; ios++){
       for (var card=0; card<sizes.ioss[ios].cards.length; card++){
-        for (var channel=0; 
-        channel<sizes.ioss[ios].cards[card].channels; 
-        channel++){
-          $("#name_ios"+ios+"card"+card+"channel"+channel).text("" + 
-            thresholdData[ios].cards[card].channels[channel].id + " " + 
-            thresholdData[ios].cards[card].channels[channel].signal + " " + 
-            thresholdData[ios].cards[card].channels[channel].type);
+        for (var channel=0; channel<sizes.ioss[ios].cards[card].channels.length; channel++){
           if (thresholdData[ios].cards[card].channels[channel].lolo){
             $("#lolo_ios"+ios+"card"+card+"channel"+channel).val(
             thresholdData[ios].cards[card].channels[channel].lolo);
@@ -99,28 +56,21 @@ $.couch.app(function(app) {
             $("#hihi_ios"+ios+"card"+card+"channel"+channel).val(
             thresholdData[ios].cards[card].channels[channel].hihi);
           }
-          else {
-            $("#lolo_ios"+ios+"card"+card+"channel"+channel).attr(
-            "disabled",true);
-            $("#lo_ios"+ios+"card"+card+"channel"+channel).attr(
-            "disabled",true);
-            $("#hi_ios"+ios+"card"+card+"channel"+channel).attr(
-            "disabled",true);
-            $("#hihi_ios"+ios+"card"+card+"channel"+channel).attr(
-            "disabled",true);
-          }
           if (thresholdData[ios].cards[card]
           .channels[channel].isEnabled!=null){ //if proprety exists
             $("#isEnabled_ios"+ios+"card"+card+"channel"+channel)
             .attr("checked", thresholdData[ios].cards[card]
             .channels[channel].isEnabled);
           }
-          else {
-            $("#isEnabled_ios"+ios+"card"+card+"channel"+channel)
-            .attr("disabled", true);
-          }
         }
       }
+      approved = approved && thresholdData[ios].approved;
+    }
+    if (approved){
+      $("#approved").attr("checked",true);
+    }
+    else {
+      $("#approved").attr("checked",false);
     }
     $("#statustext").text("Done.");
     formatAll();
@@ -137,8 +87,7 @@ $.couch.app(function(app) {
     for (var ios=0; ios<sizes.ioss.length; ios++){
       for (var card=0; card<sizes.ioss[ios].cards.length; card++){
         for (var channel=0; 
-        channel<sizes.ioss[ios].cards[card].channels; 
-        channel++){
+        channel<sizes.ioss[ios].cards[card].channels.length; channel++){
           if (thresholdData[ios].cards[card].channels[channel].lolo){
             $("#lolo_"+type+"_ios"+ios+"card"+card+"channel"+channel).text(
             thresholdData[ios].cards[card].channels[channel].lolo);
@@ -161,28 +110,28 @@ $.couch.app(function(app) {
     for (var ios=0; ios<sizes.ioss.length; ios++){
       cardCount=0;
       if (presentData[ios].cardA){
-        for (var channel=0; channel<sizes.ioss[ios].cards[cardCount].channels; channel++){
+        for (var channel=0; channel<sizes.ioss[ios].cards[cardCount].channels.length; channel++){
           $("#present_ios"+ios+"card"+cardCount+"channel"+channel).text(
           Math.round(parseFloat(presentData[ios].cardA.voltages[channel])*10000)/10000);
         }
         cardCount++;
       }
       if (presentData[ios].cardB){
-        for (var channel=0; channel<sizes.ioss[ios].cards[cardCount].channels; channel++){
+        for (var channel=0; channel<sizes.ioss[ios].cards[cardCount].channels.length; channel++){
           $("#present_ios"+ios+"card"+cardCount+"channel"+channel).text(
           Math.round(parseFloat(presentData[ios].cardB.voltages[channel])*10000)/10000);
         }
         cardCount++;
       }
       if (presentData[ios].cardC){
-        for (var channel=0; channel<sizes.ioss[ios].cards[cardCount].channels; channel++){
+        for (var channel=0; channel<sizes.ioss[ios].cards[cardCount].channels.length; channel++){
           $("#present_ios"+ios+"card"+cardCount+"channel"+channel).text(
           Math.round(parseFloat(presentData[ios].cardC.voltages[channel])*10000)/10000);
         }
         cardCount++;
       }
       if (presentData[ios].cardD){
-        for (var channel=0; channel<sizes.ioss[ios].cards[cardCount].channels; channel++){
+        for (var channel=0; channel<sizes.ioss[ios].cards[cardCount].channels.length; channel++){
           $("#present_ios"+ios+"card"+cardCount+"channel"+channel).text(
           Math.round(parseFloat(presentData[ios].cardD.voltages[channel])*10000)/10000);
         }
@@ -190,11 +139,11 @@ $.couch.app(function(app) {
       }
     }
     $("#statustext").text("Done.");
-  }
+  };
  
   var retrievePresentThresholds = function(fill){
     $("#statustext").text("Getting Thresholds...");
-    $.getJSON(path+channeldb+"/_view/recent1"+options,function(result1){
+/*    $.getJSON(path+channeldb+"/_view/recent1"+options,function(result1){
       presentThresholdData[0]=result1.rows[0].value;
       $.getJSON(path+channeldb+"/_view/recent2"+options,function(result2){ 
         presentThresholdData[1]=result2.rows[0].value;
@@ -202,18 +151,25 @@ $.couch.app(function(app) {
           presentThresholdData[2]=result3.rows[0].value;
           $.getJSON(path+channeldb+"/_view/recent4"+options,function(result4){
             presentThresholdData[3]=result4.rows[0].value;
+*/
+      retrieveSizes(function(){
             $("#statustext").text("Done.");
-            if (fill){
+            if (fill==null){
+              fillThresholds(presentThresholdData);
+            }
+            else if (fill){
               fillThresholds(presentThresholdData);
             }
             else{
               showThresholds(presentThresholdData, true);
             }
+
           });
-        });
+/*        });
       });
     });
-  }
+*/
+  };
 
   var retrieveApprovedThresholds = function(fill){
     $("#statustext").text("Getting Thresholds...");
@@ -260,30 +216,7 @@ $.couch.app(function(app) {
 
   var formatAll = function(){
     $("#statustext").text("Formatting...");
-    for (var ios=0; ios<sizes.ioss.length; ios++){
-      for (var card=0; card<sizes.ioss[ios].cards.length; card++){
-        for (var channel=0; 
-        channel<sizes.ioss[ios].cards[card].channels; 
-        channel++){
-          $("#present_ios"+ios+"card"+card+"channel"+channel).css({"color":"black"});
-          if (filledThresholdData[ios].cards[card].channels[channel].type=="spare"){
-            $("#all_ios"+ios+"card"+card+"channel"+channel).css({"display":"none"});
-          }
-          if (filledThresholdData[ios].cards[card].channels[channel].signal=="reset"){
-            $("#all_ios"+ios+"card"+card+"channel"+channel).css({"display":"none"});
-          }
-          if (filledThresholdData[ios].cards[card].channels[channel].signal=="disable"){
-            $("#all_ios"+ios+"card"+card+"channel"+channel).css({"display":"none"});
-          }
-          if (filledThresholdData[ios].cards[card].channels[channel].signal=="enable"){
-            $("#all_ios"+ios+"card"+card+"channel"+channel).css({"display":"none"});
-          }
-          if (presentThresholdData[ios].cards[card].channels[channel].isEnabled==0){
-            $("#present_ios"+ios+"card"+card+"channel"+channel).css({"color":"yellow"});
-          }
-        }
-      }
-    }
+  
     $("#statustext").text("Getting Alarms...");
     $.getJSON(path+alarmdb+"/_view/recent1"+options,function(result1){
       alarmData[0]=result1.rows[0].value;
@@ -293,6 +226,17 @@ $.couch.app(function(app) {
           alarmData[2]=result3.rows[0].value;
           $.getJSON(path+alarmdb+"/_view/recent4"+options,function(result4){
             alarmData[3]=result4.rows[0].value;
+            $(".realvalue").css({"color":"black"});
+            for (var ios=0; ios<sizes.ioss.length; ios++){
+              for (var card=0; card<sizes.ioss[ios].cards.length; card++){
+                for (var channel=0; 
+                channel<sizes.ioss[ios].cards[card].channels.length; channel++){
+                  if (presentThresholdData[ios].cards[card].channels[channel].isEnabled==0){
+                    $("#present_ios"+ios+"card"+card+"channel"+channel).css({"color":"yellow"});
+                  }
+                }
+              }
+            }
             var cardCount;
             for (var ios=0; ios<alarmData.length; ios++){
               cardCount=0;
@@ -328,7 +272,7 @@ $.couch.app(function(app) {
     });
     $("#statustext").text("Done.");
   }
-
+  
   $("#fillPresentThresholds").click(function(){
     retrievePresentThresholds(true);
   });
@@ -362,7 +306,7 @@ $.couch.app(function(app) {
     $(".approved").css({"display":"none"});
     for (var ios=0; ios<sizes.ioss.length; ios++){
       for (var card=0; card<sizes.ioss[ios].cards.length; card++){
-        for (var channel=0; channel<sizes.ioss[ios].cards[card].channels; 
+        for (var channel=0; channel<sizes.ioss[ios].cards[card].channels.length; 
         channel++){
           if (presentThresholdData[ios].cards[card].channels[channel].lolo!=null){
             filledThresholdData[ios].cards[card].channels[channel].lolo=
@@ -393,7 +337,7 @@ $.couch.app(function(app) {
       }
 
       filledThresholdData[ios].timestamp=Math.round(Date.now()/1000);
-      filledThresholdData[ios].approved=0;
+      filledThresholdData[ios].approved=$("#approved").attr("checked");
     }
     $("#statustext").text("Saving..");
     $.getJSON(path+"/_uuids?count="+sizes.ioss.length, function(result){
@@ -409,6 +353,11 @@ $.couch.app(function(app) {
       }
     });
   });
+
+  $("#everything").keydown(function(){
+    approval=false;
+    $("#approved").attr("checked",false);
+  });
   
   var waitCheck = function(amChecking){
     if (amChecking){
@@ -419,6 +368,7 @@ $.couch.app(function(app) {
     }
   } 
 
-  retrievePresentThresholds(true); // on pageload
+  retrieveSizes(retrievePresentValues);
+//  setTimeout(function(){retrievePresentThresholds();},5000); // on pageload
   waitCheck(checking);
 });

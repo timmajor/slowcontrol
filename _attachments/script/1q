@@ -1,0 +1,356 @@
+var voltages=new Array(20);
+var detailVoltages=new Array(20);
+var masterChart = new Array(20);
+var detailChart = new Array(20);
+var channelparameter = new Array(20);
+var path="http://172.25.100.70:5984";
+var channeldb="/slowcontrol-channeldb/_design/slowcontrol-channeldb";
+var datadb="/slowcontrol-data-5sec/_design/slowcontrol-data-5sec";
+var options="?descending=true&limit=1";
+                                
+$(document).ready(function() {
+
+  var retrieveSizes = function(callback){
+    $.getJSON(path+channeldb+"/_view/recent1"+options,function(result1){
+      sizes.ioss[0]=result1.rows[0].value;
+      $.getJSON(path+channeldb+"/_view/recent2"+options,function(result2){
+        sizes.ioss[1]=result2.rows[0].value;
+        $.getJSON(path+channeldb+"/_view/recent3"+options,function(result3){
+          sizes.ioss[2]=result3.rows[0].value;
+          $.getJSON(path+channeldb+"/_view/recent4"+options,function(result4){
+            sizes.ioss[3]=result4.rows[0].value;
+            jsonstr=sizes;
+            if(callback){
+              callback();
+            }
+          });
+        });
+      });
+    });
+  };
+
+/*   var jsonstr=$.parseJSON($.ajax({type:'GET',url:"http://couch.ug.snopl.us/slow_control/_design/hwinfo/_list/hwmap/mapgen?include_docs=true",dataType:'json',async:false}).responseText);
+   for(var i=0;i<channelparameter.length;++i){
+      channelparameter[i]="Not connected";
+   }
+*/
+/*  Make titles  */
+
+   //fill in chart titles
+/*   for(var i=0;i<jsonstr.rows.length;++i){
+      if(jsonstr.rows[i].value[1]=="ios"+GetParam("ios")){
+         if(jsonstr.rows[i].value[2]==GetParam("card")){
+            if(channelparameter[jsonstr.rows[i].value[3]]=="Not connected"){
+               channelparameter[jsonstr.rows[i].value[3]]=jsonstr.rows[i].value[0];
+*/
+/*  Above just sees what's in what channel -> do in slowloader  */
+
+/*	    }else if (channelparameter[jsonstr.rows[i].value[3]]!="Not connected"){
+               channelparameter[jsonstr.rows[i].value[3]]+=" and ";
+	       channelparameter[jsonstr.rows[i].value[3]]+=jsonstr.rows[i].value[0];
+	    }                                      
+            //console.log(channelparameter[jsonstr.rows[i].value[3]]);
+         }
+      }
+   }
+*/
+/*  So channelparameter is the titles - could be repeat of "name"  */
+			        
+   // create the master chart
+  function createMaster(ichart) {
+    $("#master-container"+ichart).highcharts({     
+      chart: {
+        reflow: false,
+        borderWidth: 0,
+        backgroundColor: null,
+        marginLeft: 50,
+        marginRight: 20,
+        zoomType: 'x',
+        events: {                                                  
+          // listen to the selection event on the master chart to update the 
+          // extremes of the detail chart
+          selection: function(event) {
+            var extremesObject = event.xAxis[0],
+            min = extremesObject.min,
+            max = extremesObject.max,
+            detailData = [],
+            xAxis = this.xAxis[0];
+            var starttime=Math.floor(min/1000.)+14400;
+            var endtime=Math.floor(max/1000.)+14400;
+//            var selectedview = selectView(starttime,endtime);
+            var str="";
+            $.getJSON(path+datadb+"/_view/recent1?startkey="+starttime+"&endkey"+endtime,function(result1){
+              str=result1;
+
+              for (var irow=0;irow<str.rows.length;++irow){
+                var channelindexinjsondoc = ichart;
+                var channelname = "channel"+channelindexinjsondoc;
+                if (str.rows[irow].value.cardA.voltages[ichart]!="NA"){
+                  detailData.push(str.rows[irow].value.cardA.voltages[ichart]);
+                }
+              }
+            });
+
+            // move the plot bands to reflect the new detail span
+            xAxis.removePlotBand('mask-before');
+            xAxis.addPlotBand({
+              id: 'mask-before',
+              from: Date.UTC(2006, 0, 1),
+	      //from: event.xAxis[0].min,
+              to: min,
+              color: 'rgba(0, 0, 0, 0.2)'
+            });
+                                                                        
+            xAxis.removePlotBand('mask-after');
+            xAxis.addPlotBand({
+              id: 'mask-after',
+              from: max,
+	      to: event.xAxis[0].max,
+              to: Date.UTC(2020, 11, 31),
+              color: 'rgba(0, 0, 0, 0.2)'
+            });
+	    $("#detail-container"+ichart).series[0].setData(detailVoltages[ichart]);
+            return false;
+          }
+        }
+      },
+      title: {
+        text: null
+      },
+      xAxis: {
+        type: 'datetime',
+        dateTimeLabelFormats: {
+          hour: '%e%b %H:%M'
+        },
+        showLastTickLabel: true,
+        //maxZoom: 14 * 24 * 3600000, // fourteen days
+        //plotBands: [{
+        //        id: 'mask-before',
+        //        from: Date.UTC(2006, 0, 1),
+        //        to: Date.UTC(2008, 7, 1),
+        //        color: 'rgba(0, 0, 0, 0.2)'
+        //}],
+        title: {
+          text: null
+        }
+      },
+      yAxis: {
+        gridLineWidth: 0,
+        labels: {
+          enabled: true
+        },
+        title: {
+          text: null
+        },
+        max: 5
+        //min: 0.6,
+        //showFirstLabel: false
+      },
+      tooltip: {
+        formatter: function() {
+          return false;
+        }
+      },
+      legend: {
+        enabled: false
+      },
+      credits: {
+        enabled: false
+      },
+      plotOptions: {
+        series: {
+          fillColor: {
+            linearGradient: [0, 0, 0, 70],
+            stops: [
+              [0, '#4572A7'],
+              [1, 'rgba(0,0,0,0)']
+            ]
+          },
+          lineWidth: 1,
+          marker: {
+            enabled: false
+          },
+          shadow: false,
+          states: {
+            hover: {
+              lineWidth: 1                                            
+            }
+          },
+          enableMouseTracking: false
+        }
+      },
+                                         
+      series: [{
+        type: 'area',
+        name: 'Voltage', 
+        //pointInterval: 24 * 3600 * 1000,
+        //pointStart: Date.UTC(2006, 0, 01),
+        data: voltages[ichart]
+      }],
+                                              
+      exporting: {
+        enabled: false
+      }
+    }, 
+    function(masterChart) {
+      createDetail(masterChart,ichart)
+    });
+  }
+                                
+  // create the detail chart
+  function createDetail(masterChart,ichart) {
+    //console.log(ichart);
+    // prepare the detail chart
+
+//    var detailData = [];
+//    jQuery.each(masterChart.series[0].data, function(i, point) {
+      //if (point.x >= detailStart) {
+//      detailData.push([point.x,point.y]);
+      //}
+//    });
+
+    // create a detail chart referenced by a global variable
+    detailChart[ichart]=$("#detail-container"+ichart).highcharts({     
+      chart: {
+        marginBottom: 120,
+        reflow: false,
+        marginLeft: 50,
+        marginRight: 20,
+        style: {
+          position: 'absolute'
+        }
+      },
+      credits: {
+        enabled: false
+      },
+      title: {
+        text: 'Channel '+ichart+": channelparameter[ichart]"
+      },
+      subtitle: {
+        text: 'Zoom in by dragging across the lower chart. X-axis is Sudbury time.'
+      },
+      xAxis: {
+        type: 'datetime'
+      },
+      yAxis: {
+        title: null,
+        //maxZoom: 0.1
+      },
+      tooltip: {
+        formatter: function() {
+          var point = this.points[0];
+          return '<b>'+ point.series.name +'</b><br/>'+Highcharts.dateFormat('%A %B %e %H:%M:%S', this.x) + ':<br/>'+Highcharts.numberFormat(point.y, 3) +' V';
+        },
+        shared: true
+      },
+      legend: {
+        enabled: false
+      },
+      plotOptions: {
+        series: {
+          marker: {
+            enabled: false,
+            states: {
+              hover: {
+                enabled: true,
+                radius: 3
+              }
+            }
+          }
+        }
+      },
+      series: [{
+        name: 'Voltage',
+        // pointStart: detailStart,
+        // pointInterval: 15 * 1000,
+        data: voltages[ichart]
+      }],
+                                                
+      exporting: {
+        enabled: true
+      }
+    });
+  }
+
+/*  For now, let's just set the view to be data-5sec  */
+/*
+   function selectView(starttime,endtime){
+      var interval=(endtime-starttime)/1000.; 
+      var selectedview=";
+   
+//      if (interval<=1){
+
+         selectedview="getDataIos"+GetParam("ios")+"Card"+GetParam("card");
+*/
+/*      }else if (interval>1 && interval <= 15){
+         selectedview="getDataIos"+GetParam("ios")+"Card"+GetParam("card")+"15sec";
+      }else if (interval >15 && interval <=30){
+         selectedview="getDataIos"+GetParam("ios")+"Card"+GetParam("card")+"30sec";
+      }else if (interval >30 && interval <=60){
+         selectedview="getDataIos"+GetParam("ios")+"Card"+GetParam("card")+"60sec";
+      }else if (interval >60 && interval <=900){
+         selectedview="getDataIos"+GetParam("ios")+"Card"+GetParam("card")+"900sec";
+      }
+*/
+/*         return selectedview;
+   }
+*/
+/*  Here begins the stuff that runs when the page loads  */
+
+/*  Clear voltages  */
+                                        
+    for(ichart=0;ichart<20;++ichart){
+      voltages[ichart]=[];
+    }
+
+/*  Get data, put it in str  */
+
+/*   var str=$.parseJSON($.ajax({type:'GET',url:"http://couch.ug.snopl.us/ioserverdata/_design/ios"+GetParam("ios")+"/_view/getDataIos"+GetParam("ios")+"Card"+GetParam("card")+"900sec",dataType:'json',async:false}).responseText);
+*/
+    var str;
+      $.getJSON(path+datadb+"/_view/recent1",function(result1){
+        str=result1;
+/*  Let's simply do one chart for now  */
+
+        setTimeout(function(){
+          var ichart=0;
+//   for(var ichart=0;ichart<20;++ichart){
+          for(var irow=0;irow<str.rows.length;++irow){
+            var chartindexinjsondoc = ichart;
+            var channelname = "channel"+chartindexinjsondoc;
+
+/*  Put the data from the view into voltages array  */
+            if (str.rows[irow].value.cardA.voltages[ichart]!="NA"){
+             voltages[ichart].push(str.rows[irow].value.cardA.voltages[ichart]);
+            }
+          }
+
+//      $("#graphstatus").text(JSON.stringify(voltages[0]));
+/*  Aha!  Here we take id="ichart" from HTML and add stuff.  */
+/*  Let's do that all at once.  */
+/*  Also, for now, let's hardcode in the HTML  */
+/*
+
+      var divname = "#chart"+ichart;
+      // make the container smaller and add a second container for the master chart
+      var $container = $(divname)
+         .css('position', 'relative');
+
+      var $detailContainer = $('<div id="detail-container'+ichart+'">')
+         .appendTo($container);
+
+      var $masterContainer = $('<div id="master-container'+ichart+'">')
+         .css({ position: 'absolute', top: 300, height: 80, width: '100%' })
+         .appendTo($container);
+*/
+
+
+/*  Finally, start the whole messy business for each chart  */
+
+      // create master and in its callback, create the detail chart
+          createMaster(ichart);
+//   }
+        },10000);
+      });
+    });
+

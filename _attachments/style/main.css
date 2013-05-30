@@ -11,6 +11,20 @@ h1 {
 #account {
   float:right;
 }
+.chartcontainer{
+position:relative;
+height:500;
+}
+.detailchart{
+position:relative;
+width:100%;
+}
+.masterchart{
+position:relative;
+top:300;
+height:80;
+width:100%;
+}
 .box{
 background-color:green;
 border:1px solid #000;
@@ -22,14 +36,27 @@ height:61px;
 float:left;
 text-align:center;
 }
+.inside{
+width:100%;
+height:25px;
+float:left;
+text-align:center;
+clear:both;
+}
 .one{
-width:49px;
+width:5%;
 height:25px;
 float:left;
 text-align:center;
 }
 .two{
-width:98px;
+width:10%;
+height:25px;
+float:left;
+text-align:center;
+}
+.cc{
+width:7%;
 height:25px;
 float:left;
 text-align:center;
@@ -62,12 +89,12 @@ float:none;
 clear:both;
 }
 .wideColumn {
-width:13em;
+width:15em;
 float:left;
 clear:both;
 }
 .wide {
-width:13em;
+width:15em;
 }
 .niceButton{
 width:15em;

@@ -17,6 +17,7 @@
     <div id="account"></div>
     <h1>Slow Control Alarm Thresholds</h1>
     <div id="statustext"></div>
+    <div id="statustext1"></div>
     <div class="wideColumn">
       <button id="fillPresentThresholds" class="niceButton">Fill Present Thresholds</button>
       <button id="fillApprovedThresholds" class="niceButton">Fill Approved Thresholds</button>
@@ -33,6 +34,7 @@
       <button id="refreshPresent" class="niceButton">Refresh Present Values</button>
     </div>
     <button id="saveThresholds" class="niceButton">Save Thresholds</button>
+    <button id="format" class="niceButton">Format</button>
     <div class="header">
       <div class="wideColumn">Channel Name</div>
       <div class="narrowColumn">LoLo</div>
@@ -45,7 +47,7 @@
     {{#ioss}}
       {{#cards}}
         {{#channels}}
-          <div class="channel"> 
+          <div class="channel" id="all_ios{{ios}}card{{card}}channel{{channel}}"> 
             <div class="wideColumn">
               <div class="wide">
                 <div class="wide set" id="name_ios{{ios}}card{{card}}channel{{channel}}"></div>
