@@ -6,7 +6,7 @@ function(e, r) {
     uri_name : encodeURIComponent(r.userCtx.name),
     auth_db : encodeURIComponent(r.info.authentication_db) 
   };
-  if (r.userCtx.name=="snoplusdb"){
+  if (r.userCtx.name=="snoplusdb" || r.userCtx.name=="admin"){
     $("#approval").css({"display":"block"});
   }
   else{

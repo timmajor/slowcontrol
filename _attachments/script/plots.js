@@ -1,72 +1,110 @@
-var charts=[];
-var names=[];
-var voltages = {"ioss":[]};
+$.couch.app(function(app) {
+  var charts=[];
+  var names=[];
+  var hardToReadData=[];
+  var easyToReadData=[];
+  var detailVoltages = [];
+  var channelparameter = [];
 
-/* Might not need these ultimately */
-var detailVoltages = [];
-var masterChart = {"ioss":[]};
-var detailChart = {"ioss":[]};
-var channelparameter = [];
-/* End claim */
-
-//var path="http://localhost:5984";
-var path="http://172.25.100.70:5984";
-var channeldb="/slowcontrol-channeldb/_design/slowcontrol";
-var datadb="/slowcontrol-data-5sec/_design/slowcontrol-data-5sec";
-var options="?descending=true&limit=1";
-var sizes={"ioss":[]};
-                                
-$(document).ready(function() {
+  var path="";
+  var channeldb="/slowcontrol-channeldb/_design/slowcontrol/_view/recent";
+  var datadb="/slowcontrol-data-5sec/_design/slowcontrol-data-5sec";
+  var onemindb="/slowcontrol-data-1min/_design/slowcontrol-data-1min";
+  var options="?descending=true&limit=1";
+  var recents=["/_view/recent1","/_view/recent2","/_view/recent3","/_view/recent4"];
+  var sizes={"ioss":[]};
 
   var retrieveSizes = function(callback){
-    $.getJSON(path+channeldb+"/_view/recent1"+options,function(result1){
-      sizes.ioss[0]=result1.rows[0].value;
-      $.getJSON(path+channeldb+"/_view/recent2"+options,function(result2){
-        sizes.ioss[1]=result2.rows[0].value;
-        $.getJSON(path+channeldb+"/_view/recent3"+options,function(result3){
-          sizes.ioss[2]=result3.rows[0].value;
-          $.getJSON(path+channeldb+"/_view/recent4"+options,function(result4){
-            sizes.ioss[3]=result4.rows[0].value;
-            jsonstr=sizes;
-            if(callback){
-              callback();
-            }
-          });
-        });
-      });
+    $.getJSON(path+channeldb+options,function(result){
+      sizes=result.rows[0].value;
+      if(callback){
+        callback();
+      }
     });
   };
 
-/*   var jsonstr=$.parseJSON($.ajax({type:'GET',url:"http://couch.ug.snopl.us/slow_control/_design/hwinfo/_list/hwmap/mapgen?include_docs=true",dataType:'json',async:false}).responseText);
-   for(var i=0;i<channelparameter.length;++i){
-      channelparameter[i]="Not connected";
-   }
-*/
-/*  Make titles  */
 
-   //fill in chart titles
-/*   for(var i=0;i<jsonstr.rows.length;++i){
-      if(jsonstr.rows[i].value[1]=="ios"+GetParam("ios")){
-         if(jsonstr.rows[i].value[2]==GetParam("card")){
-            if(channelparameter[jsonstr.rows[i].value[3]]=="Not connected"){
-               channelparameter[jsonstr.rows[i].value[3]]=jsonstr.rows[i].value[0];
-*/
-/*  Above just sees what's in what channel -> do in slowloader  */
-
-/*	    }else if (channelparameter[jsonstr.rows[i].value[3]]!="Not connected"){
-               channelparameter[jsonstr.rows[i].value[3]]+=" and ";
-	       channelparameter[jsonstr.rows[i].value[3]]+=jsonstr.rows[i].value[0];
-	    }                                      
-            //console.log(channelparameter[jsonstr.rows[i].value[3]]);
-         }
+  var getData = function(){
+    $("#graphstatus").text("Please wait.");
+    var views=[];
+    var iosresults=[];
+    var deltavresult;
+    for (var i=0; i<recents.length; i++){
+      views.push(
+        $.getJSON(path+datadb+recents[i]+options+"000",function(result){
+          //collects the results but in whatever order they arrive
+          iosresults.push(result.rows);
+        })
+      );
+    }
+    views.push(
+      $.getJSON(path+onemindb+"/_view/deltav"+options+"000",function(result){
+        deltavresult=result.rows;
+      })
+    );
+    //pulls all views simultaneously
+    hardToReadData={
+      "ioss":[],
+      "deltav":[]
+    };
+    $.when.apply($, views)
+    .then(function(){
+      for (var i=0; i<sizes.ioss.length-1; i++){
+        //arranges the results
+        resultpos=$.grep(iosresults, function(e,f){return e[0].value.ios == i+1;});
+        hardToReadData.ioss[i]=resultpos[0];
       }
-   }
-*/
-/*  So channelparameter is the titles - could be repeat of "name"  */
-			        
+      hardToReadData.deltav=deltavresult;
+      makeDataEasyToRead(hardToReadData);
+      $("#graphstatus").text("Ready to make plots!");
+//      $("#graphstatus").text(JSON.stringify(names));
+      $("#addplot").removeAttr("disabled");
+      return true;
+    });
+  };
+
+
+  var makeDataEasyToRead = function(hardToReadData){
+    var arrangedData={"ioss":[],"deltav":[]};
+    var cardName="";
+    for (var ios=0; ios<sizes.ioss.length-1; ios++){
+      arrangedData.ioss[ios]={"cards":[],"ios":sizes.ioss[ios].ios};
+      for (var card=0; card<sizes.ioss[ios].cards.length; card++){
+        cardName=sizes.ioss[ios].cards[card].card
+        arrangedData.ioss[ios].cards[card]={
+          "channels":[],
+          "card":cardName
+        };
+        for (channel=0; channel<hardToReadData.ioss[ios][0].value[cardName].voltages.length; channel++){
+          arrangedData.ioss[ios].cards[card].channels[channel]={
+            "data":[]
+          };
+        }
+        for (var row=0; row<hardToReadData.ioss[ios].length; row++){
+          for (channel=0; channel<arrangedData.ioss[ios].cards[card].channels.length; channel++){
+            arrangedData.ioss[ios].cards[card].channels[channel].data[row]=[hardToReadData.ioss[ios][row].key*1000,hardToReadData.ioss[ios][row].value[cardName].voltages[channel]];
+          }
+        }
+      }
+    }
+    for (var channel=0; channel<sizes.deltav.length; channel++){
+      arrangedData.deltav[channel]={"data":[]};
+      cleanedtype=sizes.deltav[channel].type;
+      deltavid=sizes.deltav[channel].id-1;
+      if (hardToReadData.deltav[0].value[cleanedtype].values[deltavid]){
+        for (var row=0; row<hardToReadData.deltav.length; row++){
+          if (hardToReadData.deltav[row].value[cleanedtype].values[deltavid]!="N/A"){
+            arrangedData.deltav[channel].data[row]=[hardToReadData.deltav[row].key*1000,hardToReadData.deltav[row].value[cleanedtype].values[deltavid]];
+          }
+        }
+      }
+    }
+    easyToReadData=arrangedData;
+  };
+
    // create the master chart
-  function createMaster(chartindex,ios_num,card_num,channel_num) {
-//    masterChart.ioss[ios_num].cards[card_num].channels[channel_num]= new Highcharts.Chart({
+  function createMaster(chartindex) {
+//    masterChart.ioss[ios].cards[card].channels[channel]= new Highcharts.Chart({})
     charts[chartindex].masterChart = new Highcharts.Chart({
       chart: {
         renderTo: "master-container"+chartindex,
@@ -81,45 +119,29 @@ $(document).ready(function() {
           // listen to the selection event on the master chart to update the 
           // extremes of the detail chart
           selection: function(event) {
-            var extremesObject = event.xAxis[0],
-            min = extremesObject.min,
-            max = extremesObject.max,
+            var extremesObject = event.xAxis[0];
+            min = extremesObject.min;
+            max = extremesObject.max;
             xAxis = this.xAxis[0];
             var starttime=Math.floor(min/1000.);
             var endtime=Math.floor(max/1000.);
-            detailVoltages[chartindex] = [];
-//            var selectedview = selectView(starttime,endtime);
-            var str="";
-            $.getJSON(path+datadb+"/_view/recent1?startkey="+starttime+"&endkey="+endtime,function(result1){
-              str=result1;
-// FIXME cardA
-              for (var irow=0;irow<str.rows.length;++irow){
-                if (str.rows[irow].value.cardA.voltages[channel_num]!="NA"){
-                  detailVoltages[chartindex].push([str.rows[irow].key*1000,str.rows[irow].value.cardA.voltages[channel_num]]);
-                }
-              }
-
-              // move the plot bands to reflect the new detail span
-              xAxis.removePlotBand('mask-before');
-              xAxis.addPlotBand({
-                id: 'mask-before',
-                from: Date.UTC(2006, 0, 1),
-	        //from: event.xAxis[0].min,
-                to: min,
-                color: 'rgba(0, 0, 0, 0.2)'
-              });
+            charts[chartindex].detailChart.xAxis[0].setExtremes(min, max);
+            xAxis.removePlotBand('mask-before');
+            xAxis.addPlotBand({
+              id: 'mask-before',
+              from: Date.UTC(2006, 0, 1),
+              //from: event.xAxis[0].min,
+              to: min,
+              color: 'rgba(0, 0, 0, 0.2)'
+            }),
                                                                         
-              xAxis.removePlotBand('mask-after');
-              xAxis.addPlotBand({
-                id: 'mask-after',
-                from: max,
-                to: event.xAxis[0].max,
-                to: Date.UTC(2020, 11, 31),
-                color: 'rgba(0, 0, 0, 0.2)'
-              });
-//              detailChart.ioss[ios_num].cards[card_num].channels[channel_num].series[0].setData(detailVoltages.ioss[ios_num].cards[card_num].channels[channel_num]);
-              charts[chartindex].detailChart.series[0].setData(detailVoltages[chartindex]);
-              //detailChart[ichart].xAxis.update();
+            xAxis.removePlotBand('mask-after');
+            xAxis.addPlotBand({
+              id: 'mask-after',
+              from: max,
+              to: event.xAxis[0].max,
+              to: Date.UTC(2020, 11, 31),
+              color: 'rgba(0, 0, 0, 0.2)'
             });
             return false;
           }
@@ -197,7 +219,7 @@ $(document).ready(function() {
         name: 'Voltage', 
         //pointInterval: 24 * 3600 * 1000,
         //pointStart: Date.UTC(2006, 0, 01),
-        data: voltages.ioss[ios_num].cards[card_num].channels[channel_num]
+        data: charts[chartindex].data
       }],
                                               
       exporting: {
@@ -205,12 +227,13 @@ $(document).ready(function() {
       }
     }, 
     function() {
-      createDetail(chartindex, ios_num,card_num,channel_num)
+      createDetail(chartindex);
+//      $("#graphstatus").text(JSON.stringify(charts[chartindex].masterChart));
     });
   }
                                 
   // create the detail chart
-  function createDetail(chartindex, ios_num,card_num,channel_num) {
+  function createDetail(chartindex) {
     //console.log(ichart);
     // prepare the detail chart
 
@@ -222,7 +245,7 @@ $(document).ready(function() {
 //    });
 
     // create a detail chart referenced by a global variable
-//    detailChart.ioss[ios_num].cards[card_num].channels[channel_num]= new Highcharts.Chart({
+//    detailChart.ioss[ios].cards[card].channels[channel]= new Highcharts.Chart({})
     charts[chartindex].detailChart = new Highcharts.Chart({
       chart: {
         renderTo: 'detail-container'+chartindex,
@@ -239,25 +262,25 @@ $(document).ready(function() {
           // listen to the selection event on the detail chart to update the 
           // extremes of the detail chart
           selection: function(event) {
-            var extremesObject = event.xAxis[0],
-            min = extremesObject.min,
-            max = extremesObject.max,
+            var extremesObject = event.xAxis[0];
+            min = extremesObject.min;
+            max = extremesObject.max;
             xAxis = charts[chartindex].masterChart.xAxis[0];
-            var starttime=Math.floor(min/1000.);
-            var endtime=Math.floor(max/1000.);
-            detailVoltages[chartindex] = [];
-//            var selectedview = selectView(starttime,endtime);
+//            var starttime=Math.floor(min/1000.);
+//            var endtime=Math.floor(max/1000.);
+            this.xAxis[0].setExtremes(min, max);
+/*            var selectedview = selectView(starttime,endtime);
             var str="";
             $.getJSON(path+datadb+"/_view/recent1?startkey="+starttime+"&endkey="+endtime,function(result1){
               str=result1;
 
               for (var irow=0;irow<str.rows.length;++irow){
 // FIXME cardA
-                if (str.rows[irow].value.cardA.voltages[channel_num]!="NA"){
-                  detailVoltages[chartindex].push([str.rows[irow].key*1000,str.rows[irow].value.cardA.voltages[channel_num]]);
+                if (str.rows[irow].value.cardA.voltages[channel]!="NA"){
+                  detailVoltages[chartindex].push([str.rows[irow].key*1000,str.rows[irow].value.cardA.voltages[channel]]);
                 }
               }
-
+*/
               // move the plot bands to reflect the new detail span
               xAxis.removePlotBand('mask-before');
               xAxis.addPlotBand({
@@ -276,12 +299,14 @@ $(document).ready(function() {
                 to: Date.UTC(2020, 11, 31),
                 color: 'rgba(0, 0, 0, 0.2)'
               });
-              charts[chartindex].detailChart.series[0].setData(detailVoltages[chartindex]);
-            });
+//              charts[chartindex].detailChart.series[0].setData(chartinfo.data);
+//              charts[chartindex].detailChart.series[0].setData(detailVoltages[chartindex]);
+//            }); matches to getJSON
             return false;
           }
         }
       },
+
       title: {
         text: null
       },
@@ -300,7 +325,7 @@ $(document).ready(function() {
         text: charts[chartindex].name 
       },
       subtitle: {
-        text: 'Zoom in by dragging across the lower chart. X-axis is Sudbury time.'
+        text: 'Zoom by dragging across either chart. X-axis is UTC.'
       },
       xAxis: {
         type: 'datetime'
@@ -337,7 +362,7 @@ $(document).ready(function() {
         name: 'Voltage',
         // pointStart: detailStart,
         // pointInterval: 15 * 1000,
-        data: voltages.ioss[ios_num].cards[card_num].channels[channel_num]
+        data: charts[chartindex].data
       }],
                                                 
       exporting: {
@@ -346,8 +371,8 @@ $(document).ready(function() {
     });
   }
 
-/*  For now, let's just set the view to be data-5sec  */
-/*
+/*  For now, let's just set the view to be data-5sec  
+
    function selectView(starttime,endtime){
       var interval=(endtime-starttime)/1000.; 
       var selectedview=";
@@ -355,8 +380,8 @@ $(document).ready(function() {
 //      if (interval<=1){
 
          selectedview="getDataIos"+GetParam("ios")+"Card"+GetParam("card");
-*/
-/*      }else if (interval>1 && interval <= 15){
+
+      }else if (interval>1 && interval <= 15){
          selectedview="getDataIos"+GetParam("ios")+"Card"+GetParam("card")+"15sec";
       }else if (interval >15 && interval <=30){
          selectedview="getDataIos"+GetParam("ios")+"Card"+GetParam("card")+"30sec";
@@ -365,21 +390,23 @@ $(document).ready(function() {
       }else if (interval >60 && interval <=900){
          selectedview="getDataIos"+GetParam("ios")+"Card"+GetParam("card")+"900sec";
       }
-*/
-/*         return selectedview;
-   }
+
+         return selectedview;
+ }
 */
 /*  Here begins the stuff that runs when the page loads  */
 
   $("#deleteplot").click(function(){
-    detailChart.ioss[0].cards[0].channels.splice(0,1);
-    masterChart.ioss[0].cards[0].channels.splice(0,1);
-    $("#chart_ios0card0channel0").remove();
+    $("#graphstatus").text(JSON.stringify(easyToReadData.deltav));
+//    detailChart.ioss[0].cards[0].channels.splice(0,1);
+//    masterChart.ioss[0].cards[0].channels.splice(0,1);
+//    $("#chart_ios0card0channel0").remove();
   });
 
   $("#addplot").click(function(){
-    chartindex=charts.length;
-    selected_num=$("#name_dropdown :selected").val();
+    var chartindex=charts.length;
+    var selected=$("#name_dropdown :selected").val();
+//    $("#graphstatus").text(JSON.stringify(names[selected]));
     $("#plots").append(
         "<div class='chartcontainer' id='chart" + chartindex + "'>"
       +   "<div class='detailchart' id='detail-container" + chartindex 
@@ -389,108 +416,82 @@ $(document).ready(function() {
       + "<\/div>"
     );
 
-    charts.push(
-      {
-        "ios":names[selected_num].ios,
-        "card":names[selected_num].card,
-        "channel":names[selected_num].channel,
-        "name":names[selected_num].name,
+    if (names[selected].ios!=null) {
+      charts[chartindex]={
+        "ios":names[selected].ios,
+        "card":names[selected].card,
+        "channel":names[selected].channel,
+        "name":names[selected].name,
         "masterChart":{},
-        "detailChart":{}
-      }
-    );
-    createMaster(chartindex, names[selected_num].ios,names[selected_num].card,names[selected_num].channel);
-    $("#graphstatus").text("ios: "+names[selected_num].ios+"\ncard: "+names[selected_num].card+"\nchannel: "+names[selected_num].channel + "\nTitle: "+names[selected_num].name);
+        "detailChart":{},
+        "data":easyToReadData.ioss[names[selected].ios].cards[names[selected].card].channels[names[selected].channel].data.reverse()
+      };
+//      $("#graphstatus").text(JSON.stringify(selected));
+      createMaster(chartindex);
+//      $("#graphstatus").text(JSON.stringify(easyToReadData.ioss[names[selected].ios].cards[names[selected].card]));
+    } else {
+      charts[chartindex]={
+        "name": names[selected].name,
+        "type": names[selected].type,
+        "id": names[selected].id,
+        "signal": names[selected].signal,
+        "channel": names[selected].channel,
+        "masterChart":{},
+        "detailChart":{},
+        "data": easyToReadData.deltav[names[selected].channel].data.reverse()
+      };
+//      $("#graphstatus").text(JSON.stringify(selected));
+      createMaster(chartindex);
+//      $("#graphstatus").text(JSON.stringify(easyToReadData.ropes[names[selected].rope]));
+    }
+//    $("#graphstatus").text("\nTitle: "+names[selected].name + " displayed below.");
   });
 
   retrieveSizes(function(){
-/*  Clear voltages in the callback */
-    for (var ios_num = 0; ios_num<sizes.ioss.length; ios_num++){
-      voltages.ioss[ios_num]={"cards":[]};
-      masterChart.ioss[ios_num]={"cards":[]};
-      detailChart.ioss[ios_num]={"cards":[]};
-      for (var card_num = 0; card_num<sizes.ioss[ios_num].cards.length; card_num++){
-        voltages.ioss[ios_num].cards[card_num]={"channels":[]};
-        masterChart.ioss[ios_num].cards[card_num]={"channels":[]};
-        detailChart.ioss[ios_num].cards[card_num]={"channels":[]};
-        for (var channel_num = 0; channel_num<sizes.ioss[ios_num].cards[card_num].channels.length; channel_num++){
-          voltages.ioss[ios_num].cards[card_num].channels[channel_num]=[];
-          masterChart.ioss[ios_num].cards[card_num].channels[channel_num]=[];
-          detailChart.ioss[ios_num].cards[card_num].channels[channel_num]=[];
-        }
-      }
-    }
-
-// Make list of channel names for drop-down
-
+    $("#addplot").attr("disabled","disabled");
+//  Clear voltages and make names in the callback 
     var nameindex=0;
-    for (var ios_num = 0; ios_num<sizes.ioss.length; ios_num++){
-      for (var card_num = 0; card_num<sizes.ioss[ios_num].cards.length; card_num++){
-        for (var channel_num = 0; channel_num<sizes.ioss[ios_num].cards[card_num].channels.length; channel_num++){
-          names[nameindex]={ 
-            "name": ""+sizes.ioss[ios_num].cards[card_num].channels[channel_num].id 
-              + " " + sizes.ioss[ios_num].cards[card_num].channels[channel_num].signal 
-              + " " + sizes.ioss[ios_num].cards[card_num].channels[channel_num].type,
-            "ios": ios_num,
-            "card": card_num,
-            "channel": channel_num
+    for (var ios = 0; ios<sizes.ioss.length-1; ios++){
+//      voltages.ioss.push({"cards":[]});
+      for (var card = 0; card<sizes.ioss[ios].cards.length; card++){
+//        voltages.ioss[ios].cards.push({"channels":[]});
+        for (var channel = 0; channel<sizes.ioss[ios].cards[card].channels.length; channel++){
+//          voltages.ioss[ios].cards[card].channels.push({});
+          nameText="";
+          if(sizes.ioss[ios].cards[card].channels[channel].type){
+            nameText += " "+sizes.ioss[ios].cards[card].channels[channel].type;
+          }
+          if(sizes.ioss[ios].cards[card].channels[channel].id){
+            nameText += sizes.ioss[ios].cards[card].channels[channel].id;
+          }
+          if(sizes.ioss[ios].cards[card].channels[channel].signal){
+            nameText += " "+sizes.ioss[ios].cards[card].channels[channel].signal;
+          }
+          if(sizes.ioss[ios].cards[card].channels[channel].unit){
+            nameText += " ("+sizes.ioss[ios].cards[card].channels[channel].unit+")";
+          }
+          names[nameindex]={
+            "name": nameText,
+            "ios": ios,
+            "card": card,
+            "channel": channel
           };
           nameindex++;
         }
       }
     }
-
-/*  Get data, put it in str  */
-
-    var str=[];
-    $.getJSON(path+datadb+"/_view/recent1?descending=true&limit=1000",function(result1){
-      str[0]=result1;
-      $.getJSON(path+datadb+"/_view/recent2?descending=true&limit=1000",function(result2){
-        str[1]=result2;
-        $.getJSON(path+datadb+"/_view/recent3?descending=true&limit=1000",function(result3){
-          str[2]=result3;
-          $.getJSON(path+datadb+"/_view/recent4?descending=true&limit=1000",function(result4){
-            str[3]=result4;
-  
-
-
-// Loops over all the charts!!
-//  setTimeout(function(){
-    for (var ios_num = 0; ios_num<sizes.ioss.length; ios_num++){
-      card_num=0;
-      if (str[ios_num].rows[0].value.cardA){
-        for (var channel_num = 0; channel_num<sizes.ioss[ios_num].cards[card_num].channels.length; channel_num++){
-          for(var irow=0;irow<str[ios_num].rows.length;++irow){
-            if (str[ios_num].rows[irow].value.cardA.voltages[channel_num]!="NA"){
-              voltages.ioss[ios_num].cards[card_num].channels[channel_num].push([str[ios_num].rows[irow].key*1000,str[ios_num].rows[irow].value.cardA.voltages[channel_num]]);
-            }
-          }
-//        createMaster(ios_num,card_num,channel_num);
-//        $("#graphstatus").text("ios"+ios_num+"card"+card_num+"channel"+channel_num);
-        }
-      }
+    for (var channel = 0; channel<sizes.deltav.length; channel++){
+      names[nameindex] = {
+        "name": ""+sizes.deltav[channel].type+" "+sizes.deltav[channel].id+" "+sizes.deltav[channel].signal+ " ("+sizes.deltav[channel].unit+")",
+        "type": sizes.deltav[channel].type,
+        "id": sizes.deltav[channel].id,
+        "signal": sizes.deltav[channel].signal, 
+        "channel": channel
+      };
+      nameindex++;
     }
-          });
-        });
-      });
-    });
-/*
-      var divname = "#chart"+ichart;
-      // make the container smaller and add a second container for the master chart
-      var $container = $(divname)
-         .css('position', 'relative');
 
-      var $detailContainer = $('<div id="detail-container'+ichart+'">')
-         .appendTo($container);
-
-      var $masterContainer = $('<div id="master-container'+ichart+'">')
-         .css({ position: 'absolute', top: 300, height: 80, width: '100%' })
-         .appendTo($container);
-*/
-/*    
-        },10000);
-*/
+    getData();
+  });
 });
-      });
-//    });
 

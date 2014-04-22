@@ -3,73 +3,67 @@ $.couch.app(function(app) {
   var filledThresholdData=[];
   var presentData=[];
   var alarms=[];
-  var path="http://172.25.100.70:5984";
-//  var path="http://localhost:5984";
-  var channeldb="/slowcontrol-channeldb/_design/slowcontrol";
+  var path="";
+  var channeldb="/slowcontrol-channeldb/_design/slowcontrol/_view/recent";
   var datadb="/slowcontrol-data-5sec/_design/slowcontrol-data-5sec";
+  var onemindb="/slowcontrol-data-1min/_design/slowcontrol-data-1min";
   var alarmdb="/slowcontrol-alarms/_design/slowcontrol-alarms";
   var options="?descending=true&limit=1";
+  var recents=["/_view/recent1","/_view/recent2","/_view/recent3","/_view/recent4"];
+  var deltav="/_view/deltav"
   var checking = true;
   var approval=false;
   var alarmIndex=0;
   var polling=true;
-  var sequence=1;
-  var sizes={
-    "ioss":[]
-  };
+  var sequence;
+  var rackAudioOn=true;
+  var colorblindModeOn=false;
+  var sizes={};
+  
 
-  var retrieveSizes = function(callback, callbackarg){
-    $.getJSON(path+channeldb+"/_view/recent1"+options,function(result1){
-      sizes.ioss[0]=result1.rows[0].value;
-      $.getJSON(path+channeldb+"/_view/recent2"+options,function(result2){
-        sizes.ioss[1]=result2.rows[0].value;
-        $.getJSON(path+channeldb+"/_view/recent3"+options,function(result3){
-          sizes.ioss[2]=result3.rows[0].value;
-          $.getJSON(path+channeldb+"/_view/recent4"+options,function(result4){
-            sizes.ioss[3]=result4.rows[0].value;
-            if(callback){
-              if(callbackarg){
-                callback(callbackarg);
-              }
-              else{
-                callback();
-              }
-            }
-          });
-        });
-      });
+  var retrieveSizes = function(callback){
+    $.getJSON(path+channeldb+options,function(result){
+      sizes=result.rows[0].value;
+      if(callback){
+        callback();
+      }
     });
   };
 
   var fillThresholds = function(thresholdData){
     filledThresholdData=thresholdData;
-    $("#statustext").text("Filling thresholds...");
-    approved=true;
-    for (var ios=0; ios<sizes.ioss.length; ios++){
+    var approved=true;
+    for (var ios=0; ios<sizes.ioss.length-1; ios++){
       for (var card=0; card<sizes.ioss[ios].cards.length; card++){
         for (var channel=0; channel<sizes.ioss[ios].cards[card].channels.length; channel++){
-          if (thresholdData[ios].cards[card].channels[channel].lolo){
-            $("#lolo_ios"+ios+"card"+card+"channel"+channel).val(
-            thresholdData[ios].cards[card].channels[channel].lolo);
-            $("#lo_ios"+ios+"card"+card+"channel"+channel).val(
-            thresholdData[ios].cards[card].channels[channel].lo);
-            $("#hi_ios"+ios+"card"+card+"channel"+channel).val(
-            thresholdData[ios].cards[card].channels[channel].hi);
-            $("#hihi_ios"+ios+"card"+card+"channel"+channel).val(
-            thresholdData[ios].cards[card].channels[channel].hihi);
+          var channelid = "_ios"+ios+"card"+card+"channel"+channel;
+          if (thresholdData.ioss[ios].cards[card].channels[channel].lolo!=null){
+            $("#lolo"+channelid).val(thresholdData.ioss[ios].cards[card].channels[channel].lolo);
+            $("#lo"+channelid).val(thresholdData.ioss[ios].cards[card].channels[channel].lo);
+            $("#hi"+channelid).val(thresholdData.ioss[ios].cards[card].channels[channel].hi);
+            $("#hihi"+channelid).val(thresholdData.ioss[ios].cards[card].channels[channel].hihi);
           }
-          if (thresholdData[ios].cards[card]
-          .channels[channel].isEnabled!=null){ //if property exists
-            if (thresholdData[ios].cards[card]
-            .channels[channel].isEnabled!=1){ //if disabled
-              $("#isEnabled_ios"+ios+"card"+card+"channel"+channel).prop("checked",thresholdData[ios].cards[card].channels[channel].isEnabled);
-            }
-            $("#isEnabled_ios"+ios+"card"+card+"channel"+channel)
-            .prop("checked", thresholdData[ios].cards[card].channels[channel].isEnabled);
+          if (thresholdData.ioss[ios].cards[card].channels[channel].isEnabled!=null){ //if property exists
+            $("#isEnabled"+channelid)
+            .prop("checked", thresholdData.ioss[ios].cards[card].channels[channel].isEnabled);
           }
         }
       }
-      approved = approved && thresholdData[ios].approved;
+      approved = approved && thresholdData.ioss[ios].approved;
+    }
+    for (var channel=0; channel<sizes.deltav.length; channel++){
+      var channelid = "_deltav"+channel;
+      //channelid = channelid.replace("_", "");
+
+      if (thresholdData.deltav[channel].lolo!=null){
+        $("#lolo"+channelid).val(thresholdData.deltav[channel].lolo);
+        $("#lo".channelid).val(thresholdData.deltav[channel].lo);
+        $("#hi"+channelid).val(thresholdData.deltav[channel].hi);
+        $("#hihi"+channelid).val(thresholdData.deltav[channel].hihi);
+      }
+      if (thresholdData.deltav[channel].isEnabled!=null){ //if property exists
+        $("#isEnabled"+channelid).prop("checked", thresholdData.deltav[channel].isEnabled);
+      }
     }
     if (approved){
       $("#approved").prop("checked",true);
@@ -77,8 +71,6 @@ $.couch.app(function(app) {
     else {
       $("#approved").prop("checked",false);
     }
-    $("#statustext").text("Done.");
-    formatAll();
   }
 
   var showThresholds = function(thresholdData, present){
@@ -88,62 +80,60 @@ $.couch.app(function(app) {
     }else{
       type="approved";
     }
-    $("#statustext").text("Showing...");
-    for (var ios=0; ios<sizes.ioss.length; ios++){
+    for (var ios=0; ios<sizes.ioss.length-1; ios++){
       for (var card=0; card<sizes.ioss[ios].cards.length; card++){
-        for (var channel=0; 
-        channel<sizes.ioss[ios].cards[card].channels.length; channel++){
-          if (thresholdData[ios].cards[card].channels[channel].lolo){
-            $("#lolo_"+type+"_ios"+ios+"card"+card+"channel"+channel).text(
-            thresholdData[ios].cards[card].channels[channel].lolo);
-            $("#lo_"+type+"_ios"+ios+"card"+card+"channel"+channel).text(
-            thresholdData[ios].cards[card].channels[channel].lo);
-            $("#hi_"+type+"_ios"+ios+"card"+card+"channel"+channel).text(
-            thresholdData[ios].cards[card].channels[channel].hi);
-            $("#hihi_"+type+"_ios"+ios+"card"+card+"channel"+channel).text(
-            thresholdData[ios].cards[card].channels[channel].hihi);
+        for (var channel=0; channel<sizes.ioss[ios].cards[card].channels.length; channel++){
+          var channelid = "_ios"+ios+"card"+card+"channel"+channel;
+          if (thresholdData.ioss[ios].cards[card].channels[channel].lolo!=null){
+            $("#lolo_"+type+channelid).text(
+            thresholdData.ioss[ios].cards[card].channels[channel].lolo);
+            $("#lo_"+type+channelid).text(
+            thresholdData.ioss[ios].cards[card].channels[channel].lo);
+            $("#hi_"+type+channelid).text(
+            thresholdData.ioss[ios].cards[card].channels[channel].hi);
+            $("#hihi_"+type+channelid).text(
+            thresholdData.ioss[ios].cards[card].channels[channel].hihi);
           }
         }
       }
     }
-    $("#statustext").text("Done.");
-  }
+    for (var channel=0; channel<sizes.deltav.length; channel++){
+      var channelid = "_deltav"+channel;
+      //channelid = channelid.replace("_", "");
+      if (thresholdData.deltav){
+        $("#lolo_" + type + channelid).text(thresholdData.deltav[channel].lolo);
+        $("#lo_" + type + channelid).text(thresholdData.deltav[channel].lo);
+        $("#hi_" + type + channelid).text(thresholdData.deltav[channel].hi);
+        $("#hihi_" + type + channelid).text(thresholdData.deltav[channel].hihi);
+      }
+    }
+  };
  
   var fillValues = function(presentValues){
-    $("#statustext").text("Refreshing...");
+    var deltavChannel=0;
+    var oldChannelType="";
+    var newChannelType="";
+    $("#time_data_deltav").text(Math.round(Date.now()/1000)-presentValues.deltav.timestamp);
+    for (var channel=0; channel<sizes.deltav.length; channel++){
+      newChannelType = sizes.deltav[channel].type;
+      if (newChannelType != oldChannelType){
+        deltavChannel=0;
+      }
+      $("#present_deltav"+channel).text(presentValues.deltav[newChannelType]["values"][sizes.deltav[channel].id-1]);
+      deltavChannel++;
+    }
+
     var cardCount;
-    for (var ios=0; ios<sizes.ioss.length; ios++){
-      cardCount=0;
-      if (presentData[ios].cardA){
-        for (var channel=0; channel<sizes.ioss[ios].cards[cardCount].channels.length; channel++){
-          $("#present_ios"+ios+"card"+cardCount+"channel"+channel).text(
-          Math.round(parseFloat(presentData[ios].cardA.voltages[channel])*10000)/10000);
-        }
-        cardCount++;
-      }
-      if (presentData[ios].cardB){
-        for (var channel=0; channel<sizes.ioss[ios].cards[cardCount].channels.length; channel++){
-          $("#present_ios"+ios+"card"+cardCount+"channel"+channel).text(
-          Math.round(parseFloat(presentData[ios].cardB.voltages[channel])*10000)/10000);
-        }
-        cardCount++;
-      }
-      if (presentData[ios].cardC){
-        for (var channel=0; channel<sizes.ioss[ios].cards[cardCount].channels.length; channel++){
-          $("#present_ios"+ios+"card"+cardCount+"channel"+channel).text(
-          Math.round(parseFloat(presentData[ios].cardC.voltages[channel])*10000)/10000);
-        }
-        cardCount++;
-      }
-      if (presentData[ios].cardD){
-        for (var channel=0; channel<sizes.ioss[ios].cards[cardCount].channels.length; channel++){
-          $("#present_ios"+ios+"card"+cardCount+"channel"+channel).text(
-          Math.round(parseFloat(presentData[ios].cardD.voltages[channel])*10000)/10000);
+    for (var ios=0; ios<sizes.ioss.length-1; ios++){
+      $("#time_data_ios"+(ios+1)).text(Math.round(Date.now()/1000)-presentValues.ioss[ios].timestamp);
+      for (var card=0; card<sizes.ioss[ios].cards.length; card++){
+        for (var channel=0; channel<sizes.ioss[ios].cards[card].channels.length; channel++){
+          $("#present_ios"+ios+"card"+card+"channel"+channel).text(
+          Math.round(parseFloat(presentValues.ioss[ios][sizes.ioss[ios].cards[card].card]["voltages"][channel])*10000)/10000);
         }
         cardCount++;
       }
     }
-    $("#statustext").text("Done.");
   };
  
   var retrievePresentThresholds = function(fill){
@@ -151,72 +141,91 @@ $.couch.app(function(app) {
     retrieveSizes(function(){
       $("#statustext").text("Done.");
       if (fill==null){
-        fillThresholds(sizes.ioss);
+        fillThresholds(sizes);
       }
       else if (fill){
-        fillThresholds(sizes.ioss);
+        fillThresholds(sizes);
       }
       else{
-        showThresholds(sizes.ioss, true);
+        showThresholds(sizes, true);
       }
     });
   };
 
   var retrieveApprovedThresholds = function(fill){
-    $("#statustext").text("Getting Thresholds...");
-    $.getJSON(path+channeldb+"/_view/recent_approved1"+options,function(result1){
-      approvedThresholdData[0]=result1.rows[0].value;
-      $.getJSON(path+channeldb+"/_view/recent_approved2"+options,function(result2){ 
-        approvedThresholdData[1]=result2.rows[0].value;
-        $.getJSON(path+channeldb+"/_view/recent_approved3"+options,function(result3){
-          approvedThresholdData[2]=result3.rows[0].value;
-          $.getJSON(path+channeldb+"/_view/recent_approved4"+options,function(result4){
-            approvedThresholdData[3]=result4.rows[0].value;
-            $("#statustext").text("Done.");
-            if (fill){
-              fillThresholds(approvedThresholdData);
-            }
-            else{
-              showThresholds(approvedThresholdData, false);
-            }
-          });
-        });
-      });
+    $.getJSON(path+channeldb+"_approved"+options,function(result){
+      approvedThresholdData=result.rows[0].value;
+      if (fill){
+        fillThresholds(approvedThresholdData);
+      }
+      else{
+        showThresholds(approvedThresholdData, false);
+      }
     });
-  }
+  };
 
   var retrievePresentValues = function(){
-    $.getJSON(path+datadb+"/_view/recent1"+options,function(result1){
-      presentData[0]=result1.rows[0].value;
-      $.getJSON(path+datadb+"/_view/recent2"+options,function(result2){ 
-        presentData[1]=result2.rows[0].value;
-        $.getJSON(path+datadb+"/_view/recent3"+options,function(result3){
-          presentData[2]=result3.rows[0].value;
-          $.getJSON(path+datadb+"/_view/recent4"+options,function(result4){
-            presentData[3]=result4.rows[0].value;
-            fillValues(presentData);
-            formatAll();
-          });
-        });
-      });
+    var views=[];
+    var iosresults=[];
+    var deltavresult=[];
+    for (var i=0; i<recents.length; i++){
+      views.push(
+        $.getJSON(path+datadb+recents[i]+options,function(result){
+          //collects the results but in whatever order they arrive
+          iosresults.push(result.rows[0].value);
+        })
+      ); 
+    }
+    views.push(
+      $.getJSON(path+onemindb+deltav+options,function(result){
+        deltavresult=result.rows[0].value;
+      })
+    );
+
+    //pulls all views simultaneously
+    $.when.apply($, views)
+    .then(function(){
+      //arrange the results
+      presentData={
+        "ioss":[],
+        "deltav":deltavresult,
+      };
+      for (var i=0; i<iosresults.length; i++){
+        resultpos=$.grep(iosresults, function(e,f){return e.ios == i+1;});
+        presentData.ioss.push(resultpos[0]);
+      }
+      fillValues(presentData);
     });
-  }
+  };
 
 
   var formatAll = function(){
-    $("#statustext").text("Formatting...");
+//    $("#statustext").text("Formatting...");
+
+// Reset everything to okay
+    if (colorblindModeOn==false){
+      $(".racks").css({"background-color":"green"});
+      $(".crates").css({"background-color":"green"});
+      $(".box").css({"background-color":"green"});
+    }
+    else {
+      $(".racks").css({"background-color":"blue"});
+      $(".crates").css({"background-color":"blue"});
+      $(".box").css({"background-color":"blue"});
+    }
     $(".realvalue").css({"color":"black"});
-    for (var ios=0; ios<sizes.ioss.length; ios++){
+
+// Set anything disabled to yellow
+    for (var ios=0; ios<sizes.ioss.length-1; ios++){
       for (var card=0; card<sizes.ioss[ios].cards.length; card++){
-        for (var channel=0; 
-        channel<sizes.ioss[ios].cards[card].channels.length; channel++){
+        for (var channel=0; channel<sizes.ioss[ios].cards[card].channels.length; channel++){
           if (sizes.ioss[ios].cards[card].channels[channel].isEnabled==0){
             $("#present_ios"+ios+"card"+card+"channel"+channel).css({"color":"yellow"});
             if (sizes.ioss[ios].cards[card].channels[channel].type=="xl3"){
               $("#xl3s").css({"background-color":"yellow"});
               $("#crate"+sizes.ioss[ios].cards[card].channels[channel].id+"channelXL3_"+sizes.ioss[ios].cards[card].channels[channel].signal.charAt(0)).css({"background-color":"yellow"});
             }
-           if (sizes.ioss[ios].cards[card].channels[channel].type=="rack voltage"){
+           if (sizes.ioss[ios].cards[card].channels[channel].type=="rack"){
               $("#rack"+sizes.ioss[ios].cards[card].channels[channel].id)
               .css({"background-color":"yellow"});
               $("#rack"+sizes.ioss[ios].cards[card].channels[channel].id+"channel"+sizes.ioss[ios].cards[card].channels[channel].signal).css({"background-color":"yellow"});
@@ -225,7 +234,7 @@ $.couch.app(function(app) {
               $("#timing").css({"background-color":"yellow"});
               $("#rackTimingchannel"+sizes.ioss[ios].cards[card].channels[channel].signal).css({"background-color":"yellow"});
             }
-            if (sizes.ioss[ios].cards[card].channels[channel].type=="crate current"){
+            if (sizes.ioss[ios].cards[card].channels[channel].type=="crate"){
               $("#crate"+sizes.ioss[ios].cards[card].channels[channel].id)
               .css({"background-color":"yellow"});
               $("#crate"+sizes.ioss[ios].cards[card].channels[channel].id+"channel"+sizes.ioss[ios].cards[card].channels[channel].signal).css({"background-color":"yellow"});
@@ -244,52 +253,109 @@ $.couch.app(function(app) {
         }
       }
     }
-    var cardCount;
-    for (var ios=0; ios<alarms.length; ios++){
-      cardCount=0;
-      if (alarms[ios].cardA){
-        for (var channel=0; channel<alarms[ios].cardA.length; channel++){
-          $("#present_ios"+ios+"card"+cardCount+"channel"+alarms[ios].cardA[channel].channel).css({"color":"red"});
-        }
-        cardCount++;
-      }
-      if (alarms[ios].cardB){
-        for (var channel=0; channel<alarms[ios].cardB.length; channel++){
-          $("#present_ios"+ios+"card"+cardCount+"channel"+alarms[ios].cardB[channel].channel).css({"color":"red"});
-        }
-        cardCount++;
-      }
-      if (alarms[ios].cardC){
-        for (var channel=0; channel<alarms[ios].cardC.length; channel++){
-          $("#present_ios"+ios+"card"+cardCount+"channel"+alarms[ios].cardC[channel].channel).css({"color":"red"});
-        }
-        cardCount++;
-      }
-      if (alarms[ios].cardD){
-        for (var channel=0; channel<alarms[ios].cardD.length; channel++){
-          $("#present_ios"+ios+"card"+cardCount+"channel"+alarms[ios].cardD[channel].channel).css({"color":"red"});
-        }
-        cardCount++;
+    for (var channel=0; channel<sizes.deltav.length; channel++){
+      if (sizes.deltav[channel].isEnabled==0){
+        $("#present_deltav"+channel).css({"color":"yellow"});
+        $("#"+sizes.deltav[channel].type+sizes.deltav[channel].id).css({"background-color":"yellow"});
+//          $("#holdups").css({"background-color":"yellow"});
       }
     }
-    $("#statustext").text("Done.");
+
+// Set anything with an alarm to red
+    for (var ios=0; ios<sizes.ioss.length-1; ios++){
+      for (var card=0; card<sizes.ioss[ios].cards.length; card++){
+        for (var channel=0; channel<alarms.ioss[ios].cards[card].channels.length; channel++){
+          $("#present_ios"+ios+"card"+card+"channel"+alarms.ioss[ios].cards[card].channels[channel].channel).css({"color":"red"});
+        }
+      }
+    }
+    var numDeltavChannels = sizes.deltav.length;
+    var channelid="";
+    for (var field in alarms.deltav){
+      for (var i=0; i<alarms.deltav[field].length; i++){
+        for (var channel=0; channel<numDeltavChannels; channel++){
+          if (sizes.deltav[channel].type==alarms.deltav[field][i].type && sizes.deltav[channel].id==alarms.deltav[field][i].id){
+            $("#present_deltav"+channel).css({"color":"red"});
+          }
+          // .replace(/\s/g,"") removes underscores.  So, "AV_temp" -> "AVtemp" etc.
+          channelid=field+alarms.deltav[field][i].id;
+          $("#"+channelid).css({"background-color":"red"});
+        }
+      }
+    }
+    $("#alarmlist").empty();
+    for (var ios=0; ios<sizes.ioss.length-1; ios++){
+      for (var card=0; card<sizes.ioss[ios].cards.length; card++){
+        for (var channel=0; channel<alarms.ioss[ios].cards[card].channels.length; channel++){
+          channelInfo=alarms.ioss[ios].cards[card].channels[channel];
+          if (channelInfo.type=="xl3"){
+            $("#xl3s").css({"background-color":"red"});
+            $("#crate"+channelInfo.id+"channelXL3_"+channelInfo.signal.charAt(0)).css({"background-color":"red"});
+          }
+          if (channelInfo.type=="rack" || channelInfo.type=="rack voltage"){
+            $("#rack"+channelInfo.id).css({"background-color":"red"});
+            $("#rack"+channelInfo.id+"channel"+channelInfo.signal).css({"background-color":"red"});
+            $("#rackaudio").get(0).play();
+          }
+          if (channelInfo.type=="timing rack"){
+            $("#timing").css({"background-color":"red"});
+            $("#rackTimingchannel"+channelInfo.signal).css({"background-color":"red"});
+          }
+          if (channelInfo.type=="crate"){
+            $("#crate"+channelInfo.id)
+            .css({"background-color":"red"});
+            $("#crate"+channelInfo.id+"channel"+channelInfo.signal).css({"background-color":"red"});
+          }
+          if (channelInfo.type=="Comp Coil"){
+            $("#coils").css({"background-color":"red"});
+            $("#coil"+channelInfo.id+"channel"+channelInfo.signal.charAt(0)).css({"background-color":"red"});
+          }
+          if (channelInfo.type=="HV Panic"){
+            $("#otherE-Stop").css({"background-color":"red"});
+          }
+          if (channelInfo.type=="UPS"){
+            $("#otherMine").css({"background-color":"red"});
+          }
+          $("#alarmlist").append('<div>'+
+          channelInfo.type + ' ' +
+          channelInfo.id + ' ' +
+          channelInfo.signal + ' ' +
+          channelInfo.voltage + '</div>');
+        }
+      }
+    }
+    var numDeltavChannels = sizes.deltav.length;
+    for (var field in alarms.deltav){
+      for (var i=0; i<alarms.deltav[field].length; i++){
+        for (var channel=0; channel<numDeltavChannels; channel++){
+          if (sizes.deltav[channel].type==alarms.deltav[field][i].type && sizes.deltav[channel].id==alarms.deltav[field][i].id){
+          $("#alarmlist").append('<div>'+
+          alarms.deltav[field][i].type + ' ' +
+          alarms.deltav[field][i].id + ' ' +
+          alarms.deltav[field][i].signal + ' ' +
+          alarms.deltav[field][i].value + '</div>');
+          }
+        }
+      }
+    }
+//    $("#statustext").text("Done.");
   }
 
   var poll=function(polling, seq){
     if (polling){
       if (seq){
         $.getJSON(path+"/slowcontrol-alarms/_changes?feed=longpoll&since="+seq,function(result){
-          if (result.last_seq==seq){ //last_seq[0] on couch >1.0
+          if (JSON.stringify(result.last_seq)==JSON.stringify(seq)){ //last_seq[0] on couch >1.0
             poll(polling,seq);
           } else {
-            sequence=result.last_seq;
+            sequence=JSON.stringify(result.last_seq);
             setAlarms();
             poll(polling,sequence);
           }
         });
       } else {
-        $.getJSON(path+"/slowcontrol-alarms/_changes",function(result){
-          sequence=result.last_seq;
+        $.getJSON(path+"/slowcontrol-alarms/_changes?descending=true&limit=1",function(result){
+          sequence=JSON.stringify(result.results[0].seq);
           setAlarms();
           poll(polling,sequence);
         });
@@ -298,175 +364,61 @@ $.couch.app(function(app) {
   }
 
   var setAlarms=function(){
-    $.getJSON(path+alarmdb+"/_view/recent1"+options,function(result1){
-      alarms[0]=result1.rows[0].value;
-      $.getJSON(path+alarmdb+"/_view/recent2"+options,function(result2){
-        alarms[1]=result2.rows[0].value;
-        $.getJSON(path+alarmdb+"/_view/recent3"+options,function(result3){
-          alarms[2]=result3.rows[0].value;
-          $.getJSON(path+alarmdb+"/_view/recent4"+options,function(result4){
-            alarms[3]=result4.rows[0].value;
-            $(".racks").css({"background-color":"green"});
-            $(".crates").css({"background-color":"green"});
-            $(".box").css({"background-color":"green"});
-            formatAll();
-            $("#alarmlist").empty();
-            for (var ios=0; ios<sizes.ioss.length; ios++){
-              if (alarms[ios].cardA){
-                for (channel in alarms[ios].cardA){
-                  if (alarms[ios].cardA[channel].type=="xl3"){
-                    $("#xl3s").css({"background-color":"red"});
-                    $("#crate"+alarms[ios].cardA[channel].id+"channelXL3_"+alarms[ios].cardA[channel].signal.charAt(0)).css({"background-color":"red"});
-                  }
-                  if (alarms[ios].cardA[channel].type=="rack voltage"){
-                    $("#rack"+alarms[ios].cardA[channel].id)
-                    .css({"background-color":"red"});
-                    $("#rack"+alarms[ios].cardA[channel].id+"channel"+alarms[ios].cardA[channel].signal).css({"background-color":"red"});
-                  }
-                  if (alarms[ios].cardA[channel].type=="timing rack"){
-                    $("#timing").css({"background-color":"red"});
-                    $("#rackTimingchannel"+alarms[ios].cardA[channel].signal).css({"background-color":"red"});
-                  }
-                  if (alarms[ios].cardA[channel].type=="crate current"){
-                    $("#crate"+alarms[ios].cardA[channel].id)
-                    .css({"background-color":"red"});
-                    $("#crate"+alarms[ios].cardA[channel].id+"channel"+alarms[ios].cardA[channel].signal).css({"background-color":"red"});
-                  }
-                  if (alarms[ios].cardA[channel].type=="Comp Coil"){
-                    $("#coils").css({"background-color":"red"});
-                    $("#coil"+alarms[ios].cardA[channel].id+"channel"+alarms[ios].cardA[channel].signal.charAt(0)).css({"background-color":"red"});
-                  }
-                  if (alarms[ios].cardA[channel].type=="HV Panic"){
-                    $("#otherE-Stop").css({"background-color":"red"});
-                  }
-                  if (alarms[ios].cardA[channel].type=="UPS"){
-                    $("#otherMine").css({"background-color":"red"});
-                  }
-                  $("#alarmlist").append('<div id="'+ alarmIndex++ +'">'+
-                  alarms[ios].cardA[channel].type + ' ' +
-                  alarms[ios].cardA[channel].id + ' ' +
-                  alarms[ios].cardA[channel].signal + ' ' +
-                  alarms[ios].cardA[channel].voltage + '</div>');
-                }
-              }
-              if (alarms[ios].cardB){
-                for (channel in alarms[ios].cardB){
-                  if (alarms[ios].cardB[channel].type=="xl3"){
-                    $("#xl3s").css({"background-color":"red"});
-                    $("#crate"+alarms[ios].cardB[channel].id+"channelXL3_"+alarms[ios].cardB[channel].signal.charAt(0)).css({"background-color":"red"});
-                  }
-                  if (alarms[ios].cardB[channel].type=="rack voltage"){
-                    $("#rack"+alarms[ios].cardB[channel].id)
-                    .css({"background-color":"red"});
-                    $("#rack"+alarms[ios].cardB[channel].id+"channel"+alarms[ios].cardB[channel].signal).css({"background-color":"red"});
-                  }
-                  if (alarms[ios].cardB[channel].type=="timing rack"){
-                    $("#timing").css({"background-color":"red"});
-                    $("#rackTimingchannel"+alarms[ios].cardB[channel].signal).css({"background-color":"red"});
-                  }
-                  if (alarms[ios].cardB[channel].type=="crate current"){
-                    $("#crate"+alarms[ios].cardB[channel].id)
-                    .css({"background-color":"red"});
-                    $("#crate"+alarms[ios].cardB[channel].id+"channel"+alarms[ios].cardB[channel].signal).css({"background-color":"red"});
-                  }
-                  if (alarms[ios].cardB[channel].type=="Comp Coil"){
-                    $("#coils").css({"background-color":"red"});
-                    $("#coil"+alarms[ios].cardB[channel].id+"channel"+alarms[ios].cardB[channel].signal.charAt(0)).css({"background-color":"red"});
-                  }
-                  if (alarms[ios].cardB[channel].type=="HV Panic"){
-                    $("#otherE-Stop").css({"background-color":"red"});
-                  }
-                  if (alarms[ios].cardB[channel].type=="UPS"){
-                    $("#otherMine").css({"background-color":"red"});
-                  }
-                  $("#alarmlist").append('<div id="'+ alarmIndex++ +'">'+
-                  alarms[ios].cardB[channel].type + ' ' +
-                  alarms[ios].cardB[channel].id + ' ' +
-                  alarms[ios].cardB[channel].signal + ' ' +
-                  alarms[ios].cardB[channel].voltage + '</div>');
-                }
-              }
-              if (alarms[ios].cardC){
-                for (channel in alarms[ios].cardC){
-                  if (alarms[ios].cardC[channel].type=="xl3"){
-                    $("#xl3s").css({"background-color":"red"});
-                    $("#crate"+alarms[ios].cardC[channel].id+"channelXL3_"+alarms[ios].cardC[channel].signal.charAt(0)).css({"background-color":"red"});
-                  }
-                  if (alarms[ios].cardC[channel].type=="rack voltage"){
-                    $("#rack"+alarms[ios].cardC[channel].id)
-                    .css({"background-color":"red"});
-                    $("#rack"+alarms[ios].cardC[channel].id+"channel"+alarms[ios].cardC[channel].signal).css({"background-color":"red"});
-                  }
-                  if (alarms[ios].cardC[channel].type=="timing rack"){
-                    $("#timing").css({"background-color":"red"});
-                    $("#rackTimingchannel"+alarms[ios].cardC[channel].signal).css({"background-color":"red"});
-                  }
-                  if (alarms[ios].cardC[channel].type=="crate current"){
-                    $("#crate"+alarms[ios].cardC[channel].id)
-                    .css({"background-color":"red"});
-                    $("#crate"+alarms[ios].cardC[channel].id+"channel"+alarms[ios].cardC[channel].signal).css({"background-color":"red"});
-                  }
-                  if (alarms[ios].cardC[channel].type=="Comp Coil"){
-                    $("#coils").css({"background-color":"red"});
-                    $("#coil"+alarms[ios].cardC[channel].id+"channel"+alarms[ios].cardC[channel].signal.charAt(0)).css({"background-color":"red"});
-                  }
-                  if (alarms[ios].cardC[channel].type=="HV Panic"){
-                    $("#otherE-Stop").css({"background-color":"red"});
-                  }
-                  if (alarms[ios].cardC[channel].type=="UPS"){
-                    $("#otherMine").css({"background-color":"red"});
-                  }
-                  $("#alarmlist").append('<div id="'+ alarmIndex++ +'">'+
-                  alarms[ios].cardC[channel].type + ' ' +
-                  alarms[ios].cardC[channel].id + ' ' +
-                  alarms[ios].cardC[channel].signal + ' ' +
-                  alarms[ios].cardC[channel].voltage + '</div>');
-                }
-              }
-              if (alarms[ios].cardD){
-                for (channel in alarms[ios].cardD){
-                  if (alarms[ios].cardD[channel].type=="xl3"){
-                    $("#xl3s").css({"background-color":"red"});
-                    $("#crate"+alarms[ios].cardD[channel].id+"channelXL3_"+alarms[ios].cardD[channel].signal.charAt(0)).css({"background-color":"red"});
-                  }
-                  if (alarms[ios].cardD[channel].type=="rack voltage"){
-                    $("#rack"+alarms[ios].cardD[channel].id)
-                    .css({"background-color":"red"});
-                    $("#rack"+alarms[ios].cardD[channel].id+"channel"+alarms[ios].cardD[channel].signal).css({"background-color":"red"});
-                  }
-                  if (alarms[ios].cardD[channel].type=="timing rack"){
-                    $("#timing").css({"background-color":"red"});
-                    $("#rackTimingchannel"+alarms[ios].cardD[channel].signal).css({"background-color":"red"});
-                  }
-                  if (alarms[ios].cardD[channel].type=="crate current"){
-                    $("#crate"+alarms[ios].cardD[channel].id)
-                    .css({"background-color":"red"});
-                    $("#crate"+alarms[ios].cardD[channel].id+"channel"+alarms[ios].cardD[channel].signal).css({"background-color":"red"});
-                  }
-                  if (alarms[ios].cardD[channel].type=="Comp Coil"){
-                    $("#coils").css({"background-color":"red"});
-                    $("#coil"+alarms[ios].cardD[channel].id+"channel"+alarms[ios].cardD[channel].signal.charAt(0)).css({"background-color":"red"});
-                  }
-                  if (alarms[ios].cardD[channel].type=="HV Panic"){
-                    $("#otherE-Stop").css({"background-color":"red"});
-                  }
-                  if (alarms[ios].cardD[channel].type=="UPS"){
-                    $("#otherMine").css({"background-color":"red"});
-                  }
-                  $("#alarmlist").append('<div id="'+ alarmIndex++ +'">'+
-                  alarms[ios].cardD[channel].type + ' ' +
-                  alarms[ios].cardD[channel].id + ' ' +
-                  alarms[ios].cardD[channel].signal + ' ' +
-                  alarms[ios].cardD[channel].voltage + '</div>');
-                }
-              }
-            }
-          });
-        });
-      });
+    var views=[];
+    var results=[];
+    for (var i=0; i<recents.length; i++){
+      views.push(
+        $.getJSON(path+alarmdb+recents[i]+options,function(result){
+          //collects the results but in whatever order they arrive
+          results.push(result.rows[0].value); 
+        })
+      )
+    }
+    views.push(
+      $.getJSON(path+alarmdb+deltav+options,function(result){
+        deltavresult=result.rows[0].value;
+      })
+    );
+    //pulls all views simultaneously
+    var hardToReadAlarms=[];
+    $.when.apply($, views)
+    .then(function(){
+      for (var i=0; i<sizes.ioss.length-1; i++){
+        //arranges the results
+        resultpos=$.grep(results, function(e,f){return e.ios == i+1;});
+        hardToReadAlarms.push(resultpos[0]);
+      }
+      hardToReadAlarms.deltav=deltavresult;
+      alarms=arrangeAlarmsLikeChanneldb(hardToReadAlarms);
+      $("#rackaudio").get(0).pause();
+      formatAll();
+      $("#time_alarm_deltav").text(Math.round(Date.now()/1000)-alarms.deltav.timestamp);
+      for (var ios=0; ios<sizes.ioss.length-1; ios++){
+        $("#time_alarm_ios"+(ios+1)).text(Math.round(Date.now()/1000)-hardToReadAlarms[ios].timestamp);
+      }
     });
   };
-  
+ 
+
+  var arrangeAlarmsLikeChanneldb = function(hardToReadAlarms){
+    var arrangedAlarms={
+      "ioss":[],
+      "deltav":[]
+    };
+    for (var ios=0; ios<sizes.ioss.length-1; ios++){
+      arrangedAlarms.ioss.push({"cards":[],"ios":sizes.ioss[ios].ios});
+      for (var card=0; card<sizes.ioss[ios].cards.length; card++){
+        arrangedAlarms.ioss[ios].cards[card]={
+          "channels":hardToReadAlarms[ios][sizes.ioss[ios].cards[card].card],
+          "card":sizes.ioss[ios].cards[card].card
+        }
+      }
+    }
+    arrangedAlarms.deltav=hardToReadAlarms.deltav;
+    return arrangedAlarms
+  }
+
+ 
   $("#fillPresentThresholds").click(function(){
     retrievePresentThresholds(true);
   });
@@ -490,62 +442,74 @@ $.couch.app(function(app) {
   $("#refreshPresent").click(function(){
     retrievePresentValues();
   });
-//  $("#format").click(function(){
-//    formatAll();
-//  });
 
   $("#saveThresholds").click(function(){
     $("#statustext").text("Saving.");
     $(".present").css({"display":"none"});
     $(".approved").css({"display":"none"});
+    filledThresholdData=sizes;
     for (var ios=0; ios<sizes.ioss.length; ios++){
       for (var card=0; card<sizes.ioss[ios].cards.length; card++){
         for (var channel=0; channel<sizes.ioss[ios].cards[card].channels.length; 
         channel++){
+          var channelid = "_ios"+ios+"card"+card+"channel"+channel;
           if (sizes.ioss[ios].cards[card].channels[channel].lolo!=null){
-            filledThresholdData[ios].cards[card].channels[channel].lolo=
-            parseFloat($("#lolo_ios"+ios+"card"+card+"channel"+channel)
-            .val());
-            filledThresholdData[ios].cards[card].channels[channel].lo=
-            parseFloat($("#lo_ios"+ios+"card"+card+"channel"+channel)
-            .val());
-            filledThresholdData[ios].cards[card].channels[channel].hi=
-            parseFloat($("#hi_ios"+ios+"card"+card+"channel"+channel)
-            .val());
-            filledThresholdData[ios].cards[card].channels[channel].hihi=
-            parseFloat($("#hihi_ios"+ios+"card"+card+"channel"+channel)
-            .val());
+            filledThresholdData.ioss[ios].cards[card].channels[channel].lolo=
+            parseFloat($("#lolo"+channelid).val());
+            filledThresholdData.ioss[ios].cards[card].channels[channel].lo=
+            parseFloat($("#lo"+channelid).val());
+            filledThresholdData.ioss[ios].cards[card].channels[channel].hi=
+            parseFloat($("#hi"+channelid).val());
+            filledThresholdData.ioss[ios].cards[card].channels[channel].hihi=
+            parseFloat($("#hihi"+channelid).val());
           }
-          if (sizes.ioss[ios].cards[card].channels[channel]
-          .isEnabled!=null){
-            if ($("#isEnabled_ios"+ios+"card"+card+"channel"+channel)
-            .prop("checked")){
-              filledThresholdData[ios].cards[card].channels[channel]
-              .isEnabled=1;
+          if (sizes.ioss[ios].cards[card].channels[channel].isEnabled!=null){
+            if ($("#isEnabled"+channelid).prop("checked")){
+              filledThresholdData.ioss[ios].cards[card].channels[channel].isEnabled=1;
             } else {
-              filledThresholdData[ios].cards[card].channels[channel]
-              .isEnabled=0;
+              filledThresholdData.ioss[ios].cards[card].channels[channel].isEnabled=0;
             }
           }
         }
       }
-
-      filledThresholdData[ios].timestamp=Math.round(Date.now()/1000);
-      filledThresholdData[ios].approved=$("#approved").prop("checked");
     }
-    $("#statustext").text("Saving..");
-    $.getJSON(path+"/_uuids?count="+sizes.ioss.length, function(result){
-      $("#statustext").text("Saving...");
-      for (var ios=0; ios<sizes.ioss.length; ios++){
-        filledThresholdData[ios]._id=result.uuids[ios]; 
-        delete filledThresholdData[ios]._rev;
-        app.db.saveDoc(filledThresholdData[ios], {
-          success : function(resp) {
-            $("#statustext").text("Saved.");
-            formatAll();
-          }
-        });
+    for (var channel=0; channel<sizes.deltav.length; channel++){
+//      var channelid = "_deltav"+sizes.deltav[channel].type+sizes.deltav[channel].id;
+//      channelid = channelid.replace(/\s/g, "_");
+      var channelid = "_deltav"+channel;
+      if (sizes.deltav[channel].multiplier!=null){
+        filledThresholdData.deltav[channel].lolo=parseFloat($("#lolo"+channelid).val());
+        filledThresholdData.deltav[channel].lo=parseFloat($("#lo"+channelid).val());
+        filledThresholdData.deltav[channel].hi=parseFloat($("#hi"+channelid).val());
+        filledThresholdData.deltav[channel].hihi=parseFloat($("#hihi"+channelid).val());
       }
+      if (sizes.deltav[channel].isEnabled!=null){
+        if ($("#isEnabled"+channelid).prop("checked")){
+          filledThresholdData.deltav[channel].isEnabled=1;
+        } else {
+          filledThresholdData.deltav[channel].isEnabled=0;
+        }
+      }
+    }
+
+    filledThresholdData.timestamp=Math.round(Date.now()/1000);
+    filledThresholdData.approved=$("#approved").prop("checked");    
+    $("#statustext").text("Saving..");
+    $.getJSON(path+"/_uuids?count=1", function(result){
+      $("#statustext").text("Saving...");
+      filledThresholdData._id=result.uuids[0]; 
+      delete filledThresholdData._rev;
+      app.db.saveDoc(filledThresholdData, {
+        success : function(resp) {
+          $("#statustext").text("Saved as "+result.uuids[0]);
+          formatAll(alarms);
+          alert("Save successful");
+        },
+        error : function(resp, textstatus, message) {
+          $("#statustext").text("Save failed: "+message);
+          alert("Save failed: "+message);
+        }
+      });
     });
   });
 
@@ -558,7 +522,34 @@ $.couch.app(function(app) {
     $("#approved").prop("checked",false);
   });
   
+  $("#rackaudiobutton").click(function(){
+    if (rackAudioOn==true){
+      rackAudioOn=false;
+      $("#rackaudiobutton").text("Rack Audio Alarm Off");
+      $("#rackaudio").get(0).muted=true;
+    }
+    else{
+      rackAudioOn=true;
+      $("#rackaudiobutton").text("Rack Audio Alarm On");
+      $("#rackaudio").get(0).muted=false;
+    }
+  });
+
+  $("#colorblindbutton").click(function(){
+    if (colorblindModeOn==true){
+      colorblindModeOn=false;
+      $("#colorblindbutton").text("Color Blind Mode Off");
+      setAlarms();
+    }
+    else {
+      colorblindModeOn=true;
+      $("#colorblindbutton").text("Color Blind Mode On");
+      setAlarms();
+    }
+  });
+
   var waitCheck = function(amChecking){
+    retrievePresentValues();
     if (amChecking){
       setTimeout(function(){
         retrievePresentValues();
@@ -566,9 +557,20 @@ $.couch.app(function(app) {
       },5000);
     }
   } 
+  
+/*  $.when(retrieveSizes())
+  .then(function(){
+    retrievePresentValues();
+    poll(polling);
+    retrievePresentThresholds(true);
+    waitCheck(checking);
+  });
+*/
+  retrieveSizes(function(){
+    retrievePresentValues();
+    poll(polling);
+    retrievePresentThresholds(true);
+    waitCheck(checking);
+  });
 
-  retrieveSizes(retrievePresentValues);
-  waitCheck(checking);
-  retrievePresentThresholds(true);
-  poll(polling);
 });

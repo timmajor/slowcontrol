@@ -13,7 +13,7 @@ h1 {
 }
 .chartcontainer{
 position:relative;
-height:500;
+height:500px;
 }
 .detailchart{
 position:relative;
@@ -21,12 +21,16 @@ width:100%;
 }
 .masterchart{
 position:relative;
-top:300;
-height:80;
+top:300px;
+height:80px;
 width:100%;
 }
 .box{
-background-color:green;
+/*background-color:green;*/
+border:1px solid #000;
+float:left;
+}
+.timetable{
 border:1px solid #000;
 float:left;
 }
@@ -64,7 +68,7 @@ text-align:center;
 .racks{
 width:120px;
 height:150px;
-background-color:green;
+/*background-color:green;*/
 border:1px solid #000; 
 float:left;
 }
@@ -73,7 +77,7 @@ width:80px;
 height:50px;
 margin-left:20px;
 margin-right:20px;
-background-color:green;
+/*background-color:green;*/
 border:1px solid #000; 
 float:left;
 }
@@ -119,7 +123,7 @@ height:24px;
 }
 .set{
 display:block;
-height:24px;
+height:16px;
 }
 
 #profile {

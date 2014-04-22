@@ -7,7 +7,12 @@ function(doc, req) {
     "racks":[],
     "crates":[],
     "compcoils":[],
-    "other":[]
+    "holdupropes":[],
+    "holddownropes":[],
+    "other":[],
+    "equator":[],
+    "AVtemp":[],
+    "cavitywaterlevel":[]
   };
   
   var channels = {
@@ -26,8 +31,6 @@ function(doc, req) {
     },
     "crates":{
       "channels":[
-        "24V",
-        "-24V",
         "8V",
         "5V",
         "-5V",
@@ -55,6 +58,31 @@ function(doc, req) {
       "channels":[""],
       "ids":["E-Stop","Mine Power"], 
       "styles":["big","big"],
+    },
+    "holdupropes":{
+      "channels":[""],
+      "ids":[1,2,3,4,5,6,7,8,9,10],
+      "styles":["one","one","one","one","one","one","one","one","one","one"]
+    },
+    "holddownropes":{
+      "channels":[""],
+      "ids":[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20],
+      "styles":["one","one","one","one","one","one","one","one","one","one","one","one","one","one","one","one","one","one","one","one"]
+    },
+    "AVtemp":{
+      "channels":[""],
+      "ids":[1],
+      "styles":["one"]
+    },
+    "cavitywaterlevel":{
+      "channels":[""],
+      "ids":[1],
+      "styles":["one"]
+    },
+    "equator":{
+      "channels":[""],
+      "ids":[1,2,3,4],
+      "styles":["one","one","one","one"]
     }
   };
 
@@ -93,6 +121,41 @@ function(doc, req) {
        "channelshort":channels.compcoils.channels[channelindex].charAt(0)
       };
     }
+  }
+
+  for (var index=0; index<channels.holdupropes.ids.length; index++){
+    data.holdupropes[index]={
+      "id":channels.holdupropes.ids[index],
+      "style":channels.holdupropes.styles[index],
+    };
+  }
+
+  for (var index=0; index<channels.holddownropes.ids.length; index++){
+    data.holddownropes[index]={
+      "id":channels.holddownropes.ids[index],
+      "style":channels.holddownropes.styles[index],
+    };
+  }
+
+  for (var index=0; index<channels.equator.ids.length; index++){
+    data.equator[index]={
+      "id":channels.equator.ids[index],
+      "style":channels.equator.styles[index],
+    };
+  }
+
+  for (var index=0; index<channels.AVtemp.ids.length; index++){
+    data.AVtemp[index]={
+      "id":channels.AVtemp.ids[index],
+      "style":channels.AVtemp.styles[index],
+    };
+  }
+
+  for (var index=0; index<channels.cavitywaterlevel.ids.length; index++){
+    data.cavitywaterlevel[index]={
+      "id":channels.cavitywaterlevel.ids[index],
+      "style":channels.cavitywaterlevel.styles[index],
+    };
   }
 
   for (var index=0; index<channels.other.ids.length; index++){
