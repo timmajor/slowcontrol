@@ -29,6 +29,7 @@ width:100%;
 /*background-color:green;*/
 border:1px solid #000;
 float:left;
+text-shadow:none;
 }
 .timetable{
 border:1px solid #000;
@@ -69,7 +70,8 @@ text-align:center;
 width:120px;
 height:150px;
 /*background-color:green;*/
-border:1px solid #000; 
+border:1px solid #000;
+text-shadow:none;
 float:left;
 }
 .crates{
@@ -78,7 +80,8 @@ height:50px;
 margin-left:20px;
 margin-right:20px;
 /*background-color:green;*/
-border:1px solid #000; 
+border:1px solid #000;
+text-shadow:none; 
 float:left;
 }
 
