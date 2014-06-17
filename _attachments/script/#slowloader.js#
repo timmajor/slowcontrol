@@ -149,7 +149,7 @@ $.couch.app(function(app) {
             "channel": channel
           };
           if (!unusedChannel(sizes.ioss[ios].cards[card].channels[channel])){
-            $("#name_dropdown").append("<option data-role='none' value="+nameindex +">" + names[nameindex].name + "<\/option>");
+v            $("#name_dropdown").append("<option data-role='none' value="+nameindex +">" + names[nameindex].name + "<\/option>");
             // because plots.js recreates the names information, it's easier to make names[] include unused channels but only display used ones in name_dropdown.  If I ever combine plots.js with slowloader and slowrunner, this can be improved.
           }
           nameindex++;
@@ -237,10 +237,6 @@ $.couch.app(function(app) {
 
 
   $("#testaudiobutton").click(function(){
-    $("#testaudio").get(0).play();
-  });
-
-  $(".testaudiobutton").click(function(){
     $("#testaudio").get(0).play();
   });
 

@@ -99,20 +99,22 @@ clear:both;
 width:15em;
 float:left;
 clear:both;
+padding:2px;
 }
 .wide {
 width:15em;
 }
 .niceButton{
-width:15em;
+width:20em;
 }
 
 .narrowColumn {
 width:6em;
 float:left;
+padding:2px;
 }
 .narrow{
-width:6em;
+width:5em;
 }
 .approved{
 display:none;
@@ -127,6 +129,10 @@ height:24px;
 .set{
 display:block;
 height:16px;
+}
+
+.red{
+color:red;
 }
 
 #profile {

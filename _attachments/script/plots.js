@@ -25,7 +25,7 @@ $.couch.app(function(app) {
 
 
   var getData = function(){
-    $("#graphstatus").text("Please wait.");
+    $("#graphstatus").text("Loading Data...Please wait.");
     var views=[];
     var iosresults=[];
     var deltavresult;

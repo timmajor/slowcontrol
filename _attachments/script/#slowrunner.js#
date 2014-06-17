@@ -19,8 +19,7 @@ $.couch.app(function(app) {
   var rackAudioOn=true;
   var colorblindModeOn=false;
   var sizes={};
-  var counter1=true;
-  var counter2=true;
+  
 
   var retrieveSizes = function(callback){
     $.getJSON(path+channeldb+options,function(result){
@@ -50,7 +49,7 @@ $.couch.app(function(app) {
           }
         }
       }
-      approved = approved && thresholdData.ioss[ios].approved;
+v      approved = approved && thresholdData.ioss[ios].approved;
     }
     for (var channel=0; channel<sizes.deltav.length; channel++){
       var channelid = "_deltav"+channel;
@@ -297,8 +296,6 @@ $.couch.app(function(app) {
             $("#rack"+channelInfo.id).css({"background-color":"red"});
             $("#rack"+channelInfo.id+"channel"+channelInfo.signal).css({"background-color":"red"});
             $("#rackaudio").get(0).play();
-	    $("#rackaudiobutton").css({"color":"red"});
-	    $(".rackaudiobutton").css({"color":"red"});
           }
           if (channelInfo.type=="timing rack"){
             $("#timing").css({"background-color":"red"});
@@ -428,33 +425,20 @@ $.couch.app(function(app) {
   $("#fillApprovedThresholds").click(function(){
     retrieveApprovedThresholds(true);
   });
-
   $("#showPresentThresholds").click(function(){
-      if (counter1) {
-	  retrievePresentThresholds(false);
-	  $(".present").css({"display":"block"});
-	  $("#showPresentThresholds").css({'color':'blue'});
-	  counter1=false;
-      } else {
-	  $(".present").css({"display":"none"});
-	  $("#showPresentThresholds").css({'color':''});
-	  counter1=true;
-      };
+    retrievePresentThresholds(false);
+    $(".present").css({"display":"block"});
   });
-
   $("#showApprovedThresholds").click(function(){
-      if (counter2) {
-	  retrieveApprovedThresholds(false);
-	  $(".approved").css({"display":"block"});
-	  $("#showApprovedThresholds").css({'color':'green'});
-	  counter2=false;
-      } else {
-	  $(".approved").css({"display":"none"});
-	  $("#showApprovedThresholds").css({'color':''});
-	  counter2=true;
-      };
+    retrieveApprovedThresholds(false);
+    $(".approved").css({"display":"block"});
   });
-
+  $("#hidePresentThresholds").click(function(){
+    $(".present").css({"display":"none"});
+  });
+  $("#hideApprovedThresholds").click(function(){
+    $(".approved").css({"display":"none"});
+  });
   $("#refreshPresent").click(function(){
     retrievePresentValues();
   });
@@ -541,37 +525,12 @@ $.couch.app(function(app) {
   $("#rackaudiobutton").click(function(){
     if (rackAudioOn==true){
       rackAudioOn=false;
-      $("#rackaudiobutton").css('color', '');
-      $(".rackaudiobutton").css('color', '');
       $("#rackaudiobutton").text("Rack Audio Alarm Off");
-      $(".rackaudiobutton").text("Rack Audio Alarm Off");
       $("#rackaudio").get(0).muted=true;
     }
     else{
       rackAudioOn=true;
-      $("#rackaudiobutton").css('color', 'red');
-      $(".rackaudiobutton").css('color', 'red');
       $("#rackaudiobutton").text("Rack Audio Alarm On");
-      $(".rackaudiobutton").text("Rack Audio Alarm On");
-      $("#rackaudio").get(0).muted=false;
-    }
-  });
-
-  $(".rackaudiobutton").click(function(){
-    if (rackAudioOn==true){
-      rackAudioOn=false;
-      $("#rackaudiobutton").css('color', '');
-      $(".rackaudiobutton").css('color', '');
-      $("#rackaudiobutton").text("Rack Audio Alarm Off");
-      $(".rackaudiobutton").text("Rack Audio Alarm Off");
-      $("#rackaudio").get(0).muted=true;
-    }
-    else{
-      rackAudioOn=true;
-      $("#rackaudiobutton").css('color', 'red');
-      $(".rackaudiobutton").css('color', 'red');
-      $("#rackaudiobutton").text("Rack Audio Alarm On");
-      $(".rackaudiobutton").text("Rack Audio Alarm On");
       $("#rackaudio").get(0).muted=false;
     }
   });
@@ -613,7 +572,5 @@ $.couch.app(function(app) {
     retrievePresentThresholds(true);
     waitCheck(checking);
   });
-
-
 
 });
