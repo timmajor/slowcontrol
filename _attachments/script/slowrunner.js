@@ -10,7 +10,7 @@ $.couch.app(function(app) {
   var alarmdb="/slowcontrol-alarms/_design/slowcontrol-alarms";
   var options="?descending=true&limit=1";
   var recents=["/_view/recent1","/_view/recent2","/_view/recent3","/_view/recent4"];
-  var deltav="/_view/deltav"
+  var deltav="/_view/pi_db"
   var checking = true;
   var approval=false;
   var alarmIndex=0;
@@ -140,7 +140,7 @@ $.couch.app(function(app) {
   var retrievePresentThresholds = function(fill){
     $("#statustext").text("Getting Thresholds...");
     retrieveSizes(function(){
-      $("#statustext").text("Done.");
+      $("#statustext").text("Done loading thresholds. These thesholds were set by "+sizes.submitter+" in "+sizes.ip_address.city+" from computer "+sizes.ip_address.ip+" on "+sizes.sudbury_time);
       if (fill==null){
         fillThresholds(sizes);
       }
@@ -205,9 +205,9 @@ $.couch.app(function(app) {
 
 // Reset everything to okay
     if (colorblindModeOn==false){
-      $(".racks").css({"background-color":"green"});
-      $(".crates").css({"background-color":"green"});
-      $(".box").css({"background-color":"green"});
+      $(".racks").css({"background-color":"forestgreen"});
+      $(".crates").css({"background-color":"forestgreen"});
+      $(".box").css({"background-color":"forestgreen"});
     }
     else {
       $(".racks").css({"background-color":"blue"});
@@ -221,44 +221,48 @@ $.couch.app(function(app) {
       for (var card=0; card<sizes.ioss[ios].cards.length; card++){
         for (var channel=0; channel<sizes.ioss[ios].cards[card].channels.length; channel++){
           if (sizes.ioss[ios].cards[card].channels[channel].isEnabled==0){
-            $("#present_ios"+ios+"card"+card+"channel"+channel).css({"color":"yellow"});
+            $("#present_ios"+ios+"card"+card+"channel"+channel).css({"color":"goldenrod"});
             if (sizes.ioss[ios].cards[card].channels[channel].type=="xl3"){
-              $("#xl3s").css({"background-color":"yellow"});
-              $("#crate"+sizes.ioss[ios].cards[card].channels[channel].id+"channelXL3_"+sizes.ioss[ios].cards[card].channels[channel].signal.charAt(0)).css({"background-color":"yellow"});
+              $("#xl3s").css({"background-color":"goldenrod"});
+              $("#crate"+sizes.ioss[ios].cards[card].channels[channel].id+"channelXL3_"+sizes.ioss[ios].cards[card].channels[channel].signal.charAt(0)).css({"background-color":"goldenrod"});
             }
            if (sizes.ioss[ios].cards[card].channels[channel].type=="rack"){
               $("#rack"+sizes.ioss[ios].cards[card].channels[channel].id)
-              .css({"background-color":"yellow"});
-              $("#rack"+sizes.ioss[ios].cards[card].channels[channel].id+"channel"+sizes.ioss[ios].cards[card].channels[channel].signal).css({"background-color":"yellow"});
+              .css({"background-color":"goldenrod"});
+              $("#rack"+sizes.ioss[ios].cards[card].channels[channel].id+"channel"+sizes.ioss[ios].cards[card].channels[channel].signal).css({"background-color":"goldenrod"});
             }
             if (sizes.ioss[ios].cards[card].channels[channel].type=="timing rack"){
-              $("#timing").css({"background-color":"yellow"});
-              $("#rackTimingchannel"+sizes.ioss[ios].cards[card].channels[channel].signal).css({"background-color":"yellow"});
+              $("#timing").css({"background-color":"goldenrod"});
+              $("#rackTimingchannel"+sizes.ioss[ios].cards[card].channels[channel].signal).css({"background-color":"goldenrod"});
             }
             if (sizes.ioss[ios].cards[card].channels[channel].type=="crate"){
               $("#crate"+sizes.ioss[ios].cards[card].channels[channel].id)
-              .css({"background-color":"yellow"});
-              $("#crate"+sizes.ioss[ios].cards[card].channels[channel].id+"channel"+sizes.ioss[ios].cards[card].channels[channel].signal).css({"background-color":"yellow"});
+              .css({"background-color":"goldenrod"});
+              $("#crate"+sizes.ioss[ios].cards[card].channels[channel].id+"channel"+sizes.ioss[ios].cards[card].channels[channel].signal).css({"background-color":"goldenrod"});
             }
             if (sizes.ioss[ios].cards[card].channels[channel].type=="Comp Coil"){
-              $("#coils").css({"background-color":"yellow"});
-              $("#coil"+sizes.ioss[ios].cards[card].channels[channel].id+"channel"+sizes.ioss[ios].cards[card].channels[channel].signal.charAt(0)).css({"background-color":"yellow"});
+              $("#coils").css({"background-color":"goldenrod"});
+              $("#coil"+sizes.ioss[ios].cards[card].channels[channel].id+"channel"+sizes.ioss[ios].cards[card].channels[channel].signal.charAt(0)).css({"background-color":"goldenrod"});
             }
             if (sizes.ioss[ios].cards[card].channels[channel].type=="HV Panic"){
-              $("#otherE-Stop").css({"background-color":"yellow"});
+              $("#otherE-Stop").css({"background-color":"golenrod"});
             }
             if (sizes.ioss[ios].cards[card].channels[channel].type=="UPS"){
-              $("#otherMine").css({"background-color":"yellow"});
+              $("#otherMine").css({"background-color":"goldenrod"});
             }
+	    if (sizes.ioss[ios].cards[card].channels[channel].type=="MTCD"){
+              $("#otherMTCD").css({"background-color":"goldenrod"});
+            }
+
           }
         }
       }
     }
     for (var channel=0; channel<sizes.deltav.length; channel++){
       if (sizes.deltav[channel].isEnabled==0){
-        $("#present_deltav"+channel).css({"color":"yellow"});
-        $("#"+sizes.deltav[channel].type+sizes.deltav[channel].id).css({"background-color":"yellow"});
-//          $("#holdups").css({"background-color":"yellow"});
+        $("#present_deltav"+channel).css({"color":"goldenrod"});
+        $("#"+sizes.deltav[channel].type+sizes.deltav[channel].id).css({"background-color":"goldenrod"});
+//          $("#holdups").css({"background-color":""goldenrod"});
       }
     }
 
@@ -319,6 +323,9 @@ $.couch.app(function(app) {
           if (channelInfo.type=="UPS"){
             $("#otherMine").css({"background-color":"red"});
           }
+	  if (channelInfo.type=="MTCD"){
+            $("#otherMTCD").css({"background-color":"red"});
+          }
           $("#alarmlist").append('<div>'+
           channelInfo.type + ' ' +
           channelInfo.id + ' ' +
@@ -378,7 +385,7 @@ $.couch.app(function(app) {
       )
     }
     views.push(
-      $.getJSON(path+alarmdb+deltav+options,function(result){
+      $.getJSON(path+alarmdb+"/_view/pi_db"+options,function(result){
         deltavresult=result.rows[0].value;
       })
     );
@@ -446,7 +453,7 @@ $.couch.app(function(app) {
       if (counter2) {
 	  retrieveApprovedThresholds(false);
 	  $(".approved").css({"display":"block"});
-	  $("#showApprovedThresholds").css({'color':'green'});
+	  $("#showApprovedThresholds").css({'color':'forestgreen'});
 	  counter2=false;
       } else {
 	  $(".approved").css({"display":"none"});
@@ -507,9 +514,14 @@ $.couch.app(function(app) {
         }
       }
     }
-
-    filledThresholdData.timestamp=Math.round(Date.now()/1000);
-    filledThresholdData.approved=$("#approved").prop("checked");    
+      $.get("http://ipinfo.io", function(response) {
+	  filledThresholdData.ip_address = response;
+      }, "jsonp");
+    //filledThresholdData.ip_address = ip_address
+    filledThresholdData.timestamp = presentData.ioss[0].timestamp
+    filledThresholdData.sudbury_time = presentData.ioss[0].sudbury_time
+    filledThresholdData.submitter = $("#name-text").val()
+    filledThresholdData.approved = $("#approved").prop("checked");    
     $("#statustext").text("Saving..");
     $.getJSON(path+"/_uuids?count=1", function(result){
       $("#statustext").text("Saving...");
@@ -517,7 +529,7 @@ $.couch.app(function(app) {
       delete filledThresholdData._rev;
       app.db.saveDoc(filledThresholdData, {
         success : function(resp) {
-          $("#statustext").text("Saved as "+result.uuids[0]);
+          $("#statustext").text("Saved as "+result.uuids[0]+" by "+$("#name-text").val());
           formatAll(alarms);
           alert("Save successful");
         },

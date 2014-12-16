@@ -95,8 +95,14 @@ width:100%;
 float:none;
 clear:both;
 }
+.middleColumn {
+width:13em;
+float:left;
+clear:both;
+padding:2px;
+}
 .wideColumn {
-width:15em;
+width:16em;
 float:left;
 clear:both;
 padding:2px;

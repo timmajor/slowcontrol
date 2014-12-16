@@ -7,7 +7,7 @@ $.couch.app(function(app) {
   var channelNames;
   var sizes={};
   var names=[];
-  var deltav="/_view/deltav";
+  var deltav="/_view/pi_db";
 
   var retrieveSizes = function(callback){
     $.getJSON(path+channeldb+options,function(result){

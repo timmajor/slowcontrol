@@ -38,7 +38,7 @@ $.couch.app(function(app) {
       );
     }
     views.push(
-      $.getJSON(path+onemindb+"/_view/deltav"+options+"000",function(result){
+      $.getJSON(path+onemindb+"/_view/pi_db"+options+"000",function(result){
         deltavresult=result.rows;
       })
     );
