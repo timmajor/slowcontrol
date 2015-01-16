@@ -56,7 +56,7 @@
   </div><!-- /controlgroup -->
   <div data-role="navbar">
     <ul>
-      <li><a href="#alarmsoverview" data-icon="grid">Overview</a>
+      <!--<li><a href="#alarmsoverview" data-icon="grid">Overview</a>-->
       <li><a href="#alarmsdetail" class="ui-btn-active ui-state-persist" data-icon="bullets">Detail</a>
       <li><a href="#alarmslist" data-icon="alert">Alarm List</a>
       <li><a href="#thresholds" data-icon="edit">Thresholds</a>
@@ -245,78 +245,78 @@
 	  </div>
     </div>
  
-    <div data-role="page" id="alarmsoverview">
-      {{!<div id="account"></div>}}
-      <!--Overview-->
-      <div data-role="header" class="ui-state-persist" data-position="fixed">
-	<h1>Slow Control Alarms</h1>
-	<a href="http://snopl.us" data-icon="arrow-l">Return to snopl.us</a>
-      <div data-role="controlgroup" data-type="horizontal" class="ui-mini ui-btn-right">
-	<a class="rackaudiobutton ui-btn ui-btn-icon-right ui-icon-comment">Rack Audio Alarm On</a>
-	<a class="testaudiobutton ui-btn ui-btn-icon-right ui-icon-gear">Test Audio</a>
-      </div>
-	<div data-role="navbar">
-          <ul>
-            <li><a href="#alarmsoverview" class="ui-btn-active ui-state-persist" data-icon="grid">Overview</a>
-	    <li><a href="#alarmsdetail"  data-icon="bullets">Detail</a>
-	    <li><a href="#alarmslist" data-icon="alert">Alarm List</a>
-            <li><a href="#thresholds" data-icon="edit">Thresholds</a>
-            <li><a href="#graphs" data-icon="bars">Graphs</a>
-          </ul>
-	</div>
-      </div>
-      <!--Testing Zone-->
-      <!--<div class="racks" id="rack1">Rack 1 Test</div>-->
-      <p></p>
-      <div id="racks" style="width:100%;float:left;clear:both">
-        <div class="racks" id="rack1">Rack 1 Voltage
-          <div class="crates" id="crate0">Crate 0 Current</div>
-          <div class="crates" id="crate1">Crate 1 Current</div>
-        </div>
-        <div class="racks" id="rack2">Rack 2 Voltage
-          <div class="crates" id="crate2">Crate 2 Current</div>
-          <div class="crates" id="crate3">Crate 3 Current</div>
-        </div>
-        <div class="racks" id="rack3">Rack 3 Voltage
-          <div class="crates" id="crate4">Crate 4 Current</div>
-        </div>
-        <div class="racks" id="rack4">Rack 4 Voltage
-          <div class="crates" id="crate5">Crate 5 Current</div>
-          <div class="crates" id="crate6">Crate 6 Current</div>
-        </div>
-        <div class="racks" id="rack5">Rack 5 Voltage
-          <div class="crates" id="crate7">Crate 7 Current</div>
-          <div class="crates" id="crate8">Crate 8 Current</div>
-        </div>
-        <div class="racks" id="rack6">Rack 6 Voltage
-          <div class="crates" id="crate9">Crate 9 Current</div>
-          <div class="crates" id="crate10">Crate 10 Current</div>
-        </div>
-        <div class="racks" id="rack7">Rack 7 Voltage
-          <div class="crates" id="crate11">Crate 11 Current</div>
-        </div>
-        <div class="racks" id="rack8">Rack 8 Voltage
-          <div class="crates" id="crate12">Crate 12 Current</div>
-          <div class="crates" id="crate13">Crate 13 Current</div>
-        </div>
-        <div class="racks" id="rack9">Rack 9 Voltage
-          <div class="crates" id="crate14">Crate 14 Current</div>
-          <div class="crates" id="crate15">Crate 15 Current</div>
-        </div>
-        <div class="racks" id="rack10">Rack 10 Voltage
-          <div class="crates" id="crate16">Crate 16 Current</div>
-        </div>
-        <div class="racks" id="rack11">Rack 11 Voltage
-          <div class="crates" id="crate17">Crate 17 Current</div>
-          <div class="crates" id="crate18">Crate 18 Current</div>
-        </div>
-      </div>
-      <div id="moreracks" style="width:100%;float:left;clear:both">
-        <div class="racks" id="timing">Timing Rack Voltage</div>
-        <div class="racks" id="xl3s">XL3s</div>
-        <div class="racks" id="coils">Comp Coils</div>
-      </div>
-    </div>
+<!--    <div data-role="page" id="alarmsoverview">-->
+<!--      {{!<div id="account"></div>}}-->
+<!--      <!--Overview-->-->
+<!--      <div data-role="header" class="ui-state-persist" data-position="fixed">-->
+<!--	<h1>Slow Control Alarms</h1>-->
+<!--	<a href="http://snopl.us" data-icon="arrow-l">Return to snopl.us</a>-->
+<!--      <div data-role="controlgroup" data-type="horizontal" class="ui-mini ui-btn-right">-->
+<!--	<a class="rackaudiobutton ui-btn ui-btn-icon-right ui-icon-comment">Rack Audio Alarm On</a>-->
+<!--	<a class="testaudiobutton ui-btn ui-btn-icon-right ui-icon-gear">Test Audio</a>-->
+<!--      </div>-->
+<!--	<div data-role="navbar">-->
+<!--          <ul>-->
+<!--            <li><a href="#alarmsoverview" class="ui-btn-active ui-state-persist" data-icon="grid">Overview</a>-->
+<!--	    <li><a href="#alarmsdetail"  data-icon="bullets">Detail</a>-->
+<!--	    <li><a href="#alarmslist" data-icon="alert">Alarm List</a>-->
+<!--            <li><a href="#thresholds" data-icon="edit">Thresholds</a>-->
+<!--            <li><a href="#graphs" data-icon="bars">Graphs</a>-->
+<!--          </ul>-->
+<!--	</div>-->
+<!--      </div>-->
+<!--      <!--Testing Zone-->-->
+<!--      <!--<div class="racks" id="rack1">Rack 1 Test</div>-->-->
+<!--      <p></p>-->
+<!--      <div id="racks" style="width:100%;float:left;clear:both">-->
+<!--        <div class="racks" id="rack1">Rack 1 Voltage-->
+<!--          <div class="crates" id="crate0">Crate 0 Current</div>-->
+<!--          <div class="crates" id="crate1">Crate 1 Current</div>-->
+<!--        </div>-->
+<!--        <div class="racks" id="rack2">Rack 2 Voltage-->
+<!--          <div class="crates" id="crate2">Crate 2 Current</div>-->
+<!--          <div class="crates" id="crate3">Crate 3 Current</div>-->
+<!--        </div>-->
+<!--        <div class="racks" id="rack3">Rack 3 Voltage-->
+<!--          <div class="crates" id="crate4">Crate 4 Current</div>-->
+<!--        </div>-->
+<!--        <div class="racks" id="rack4">Rack 4 Voltage-->
+<!--          <div class="crates" id="crate5">Crate 5 Current</div>-->
+<!--          <div class="crates" id="crate6">Crate 6 Current</div>-->
+<!--        </div>-->
+<!--        <div class="racks" id="rack5">Rack 5 Voltage-->
+<!--          <div class="crates" id="crate7">Crate 7 Current</div>-->
+<!--          <div class="crates" id="crate8">Crate 8 Current</div>-->
+<!--        </div>-->
+<!--        <div class="racks" id="rack6">Rack 6 Voltage-->
+<!--          <div class="crates" id="crate9">Crate 9 Current</div>-->
+<!--          <div class="crates" id="crate10">Crate 10 Current</div>-->
+<!--        </div>-->
+<!--        <div class="racks" id="rack7">Rack 7 Voltage-->
+<!--          <div class="crates" id="crate11">Crate 11 Current</div>-->
+<!--        </div>-->
+<!--        <div class="racks" id="rack8">Rack 8 Voltage-->
+<!--          <div class="crates" id="crate12">Crate 12 Current</div>-->
+<!--          <div class="crates" id="crate13">Crate 13 Current</div>-->
+<!--        </div>-->
+<!--        <div class="racks" id="rack9">Rack 9 Voltage-->
+<!--          <div class="crates" id="crate14">Crate 14 Current</div>-->
+<!--          <div class="crates" id="crate15">Crate 15 Current</div>-->
+<!--        </div>-->
+<!--        <div class="racks" id="rack10">Rack 10 Voltage-->
+<!--          <div class="crates" id="crate16">Crate 16 Current</div>-->
+<!--        </div>-->
+<!--        <div class="racks" id="rack11">Rack 11 Voltage-->
+<!--          <div class="crates" id="crate17">Crate 17 Current</div>-->
+<!--          <div class="crates" id="crate18">Crate 18 Current</div>-->
+<!--        </div>-->
+<!--      </div>-->
+<!--      <div id="moreracks" style="width:100%;float:left;clear:both">-->
+<!--        <div class="racks" id="timing">Timing Rack Voltage</div>-->
+<!--        <div class="racks" id="xl3s">XL3s</div>-->
+<!--        <div class="racks" id="coils">Comp Coils</div>-->
+<!--      </div>-->
+<!--    </div>-->
 
     <div data-role="page" id="alarmslist">
       {{!<div id="account"></div>}}
@@ -330,7 +330,7 @@
       </div>
       <div data-role="navbar">
           <ul>
-            <li><a href="#alarmsoverview" data-icon="grid">Overview</a>
+            <!--<li><a href="#alarmsoverview" data-icon="grid">Overview</a>-->
 	    <li><a href="#alarmsdetail"  data-icon="bullets">Detail</a>
 	    <li><a href="#alarmslist" class="ui-btn-active ui-state-persist" data-icon="alert">Alarm List</a>
             <li><a href="#thresholds" data-icon="edit">Thresholds</a>
@@ -418,7 +418,7 @@
       </div>
       <div data-role="navbar">
           <ul>
-            <li><a href="#alarmsoverview" data-icon="grid">Overview</a>
+            <!--<li><a href="#alarmsoverview" data-icon="grid">Overview</a>-->
 	    <li><a href="#alarmsdetail" data-icon="bullets">Detail</a>
 	    <li><a href="#alarmslist" data-icon="alert">Alarm List</a>
             <li><a href="#thresholds" data-icon="edit">Thresholds</a>
