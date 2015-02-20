@@ -63,7 +63,7 @@ $.couch.app(function(app) {
         $("#hihi"+channelid).val(thresholdData.deltav[channel].hihi);
       }
       if (thresholdData.deltav[channel].isEnabled!=null){ //if property exists
-        $("#isEnabled"+channelid).prop("checked", thresholdData.deltav[channel].isEnabled);
+          $("#isEnabled"+channelid).prop("checked", thresholdData.deltav[channel].isEnabled);
       }
     }
     if (approved){
@@ -215,6 +215,7 @@ $.couch.app(function(app) {
       $(".box").css({"background-color":"blue"});
     }
     $(".realvalue").css({"color":"black"});
+    $(".notUnused").addClass("notAlarmed");
 
 // Set anything disabled to yellow
     for (var ios=0; ios<sizes.ioss.length-1; ios++){
@@ -240,7 +241,7 @@ $.couch.app(function(app) {
               .css({"background-color":"goldenrod"});
               $("#crate"+sizes.ioss[ios].cards[card].channels[channel].id+"channel"+sizes.ioss[ios].cards[card].channels[channel].signal).css({"background-color":"goldenrod"});
             }
-            if (sizes.ioss[ios].cards[card].channels[channel].type=="Comp Coil"){
+           if (sizes.ioss[ios].cards[card].channels[channel].type=="Comp Coil"){
               $("#coils").css({"background-color":"goldenrod"});
               $("#coil"+sizes.ioss[ios].cards[card].channels[channel].id+"channel"+sizes.ioss[ios].cards[card].channels[channel].signal.charAt(0)).css({"background-color":"goldenrod"});
             }
@@ -263,7 +264,7 @@ $.couch.app(function(app) {
         $("#present_deltav"+channel).css({"color":"goldenrod"});
         $("#"+sizes.deltav[channel].type+sizes.deltav[channel].id).css({"background-color":"goldenrod"});
 //          $("#holdups").css({"background-color":""goldenrod"});
-      }
+     }
     }
 
 // Set anything with an alarm to red
@@ -271,6 +272,7 @@ $.couch.app(function(app) {
       for (var card=0; card<sizes.ioss[ios].cards.length; card++){
         for (var channel=0; channel<alarms.ioss[ios].cards[card].channels.length; channel++){
           $("#present_ios"+ios+"card"+card+"channel"+alarms.ioss[ios].cards[card].channels[channel].channel).css({"color":"red"});
+	  $("#all_ios"+ios+"card"+card+"channel"+alarms.ioss[ios].cards[card].channels[channel].channel).removeClass("notAlarmed");
         }
       }
     }
@@ -281,6 +283,7 @@ $.couch.app(function(app) {
         for (var channel=0; channel<numDeltavChannels; channel++){
           if (sizes.deltav[channel].type==alarms.deltav[field][i].type && sizes.deltav[channel].id==alarms.deltav[field][i].id){
             $("#present_deltav"+channel).css({"color":"red"});
+	    $("#all_deltav"+channel).removeClass("notAlarmed");
           }
           // .replace(/\s/g,"") removes underscores.  So, "AV_temp" -> "AVtemp" etc.
           channelid=field+alarms.deltav[field][i].id;
@@ -289,10 +292,10 @@ $.couch.app(function(app) {
       }
     }
     $("#alarmlist").empty();
-    for (var ios=0; ios<sizes.ioss.length-1; ios++){
-      for (var card=0; card<sizes.ioss[ios].cards.length; card++){
-        for (var channel=0; channel<alarms.ioss[ios].cards[card].channels.length; channel++){
-          channelInfo=alarms.ioss[ios].cards[card].channels[channel];
+      for (var ios=0; ios<sizes.ioss.length-1; ios++){
+	for (var card=0; card<sizes.ioss[ios].cards.length; card++){
+          for (var channel=0; channel<alarms.ioss[ios].cards[card].channels.length; channel++){
+	      channelInfo=alarms.ioss[ios].cards[card].channels[channel];
           if (channelInfo.type=="xl3"){
             $("#xl3s").css({"background-color":"red"});
             $("#crate"+channelInfo.id+"channelXL3_"+channelInfo.signal.charAt(0)).css({"background-color":"red"});
@@ -300,9 +303,11 @@ $.couch.app(function(app) {
           if (channelInfo.type=="rack" || channelInfo.type=="rack voltage"){
             $("#rack"+channelInfo.id).css({"background-color":"red"});
             $("#rack"+channelInfo.id+"channel"+channelInfo.signal).css({"background-color":"red"});
-            $("#rackaudio").get(0).play();
-	    $("#rackaudiobutton").css({"color":"red"});
-	    $(".rackaudiobutton").css({"color":"red"});
+            if (channelInfo.reason!="off"){
+		$("#rackaudio").get(0).play();
+		$("#rackaudiobutton").css({"color":"red"});
+		$(".rackaudiobutton").css({"color":"red"});
+	    }
           }
           if (channelInfo.type=="timing rack"){
             $("#timing").css({"background-color":"red"});
@@ -326,11 +331,13 @@ $.couch.app(function(app) {
 	  if (channelInfo.type=="MTCD"){
             $("#otherMTCD").css({"background-color":"red"});
           }
-          $("#alarmlist").append('<div>'+
-          channelInfo.type + ' ' +
-          channelInfo.id + ' ' +
-          channelInfo.signal + ' ' +
-          channelInfo.voltage + '</div>');
+          if (channelInfo.reason!="off"){
+	      $("#alarmlist").append('<div>'+
+		channelInfo.type + ' ' +
+		channelInfo.id + ' ' +
+		channelInfo.signal + ' ' +
+		channelInfo.voltage + '</div>');
+	  }
         }
       }
     }
@@ -428,6 +435,7 @@ $.couch.app(function(app) {
     return arrangedAlarms
   }
 
+    
  
   $("#fillPresentThresholds").click(function(){
     retrievePresentThresholds(true);
@@ -436,19 +444,24 @@ $.couch.app(function(app) {
     retrieveApprovedThresholds(true);
   });
 
-  $("#showPresentThresholds").click(function(){
-      if (counter1) {
-	  retrievePresentThresholds(false);
-	  $(".present").css({"display":"block"});
-	  $("#showPresentThresholds").css({'color':'blue'});
-	  counter1=false;
-      } else {
-	  $(".present").css({"display":"none"});
-	  $("#showPresentThresholds").css({'color':''});
-	  counter1=true;
-      };
-  });
+    $("#showPresentThresholds").change(function(){
+        if($(this).is(":checked")){
+	    retrievePresentThresholds(false);
+	    $(".present").css({"display":"block"});
+        }else{
+            $(".present").css({"display":"none"});  
+        };
+    });
 
+    $("#showApprovedThresholds").change(function(){
+        if($(this).is(":checked")){
+	    retrieveApprovedThresholds(false);
+	    $(".approved").css({"display":"block"});
+        }else{
+            $(".approved").css({"display":"none"});  
+        };
+    });
+/*    
   $("#showApprovedThresholds").click(function(){
       if (counter2) {
 	  retrieveApprovedThresholds(false);
@@ -460,11 +473,44 @@ $.couch.app(function(app) {
 	  $("#showApprovedThresholds").css({'color':''});
 	  counter2=true;
       };
-  });
+  });*/
 
-  $("#refreshPresent").click(function(){
-    retrievePresentValues();
-  });
+    
+    $("#selectChannels").click(function(){
+	$(".notUnused").css({"display":"none"});
+	var selected=$("#chooseChannels").val();
+	$("#enableChannels").prop("disabled", false);
+	$("#disableChannels").prop("disabled", false);
+	if (selected=='alarms'){
+	    $(".notUnused").css({"display":"block"});
+	    $(".notAlarmed").css({"display":"none"});
+	    $("#enableChannels").prop("disabled", true);
+	    $("#disableChannels").prop("disabled", true);
+	} else if (selected=='allChannels') {
+	    $(".notUnused").css({"display":"block"});
+	    $("#enableChannels").prop("disabled", true);
+	    $("#disableChannels").prop("disabled", true);
+	} else if (selected=='timingrack') {
+	    $(".type"+selected).css({"display":"block"});
+	    $(".typeMTCD").css({"display":"block"});
+	} else {
+	    $(".type"+selected).css({"display":"block"});
+	}
+    });
+
+    $("#enableChannels").click(function(){
+	var selected=$("#chooseChannels").val();
+	$("."+selected).prop("checked", true);
+    });
+
+    $("#disableChannels").click(function(){
+	var selected=$("#chooseChannels").val();
+	$("."+selected).prop("checked", false);
+    });
+
+//  $("#refreshPresent").click(function(){
+//    retrievePresentValues();
+//  });
 
   $("#saveThresholds").click(function(){
     $("#statustext").text("Saving.");
@@ -532,6 +578,7 @@ $.couch.app(function(app) {
           $("#statustext").text("Saved as "+result.uuids[0]+" by "+$("#name-text").val());
           formatAll(alarms);
           alert("Save successful");
+	  $("#popupSave").popup("close");  
         },
         error : function(resp, textstatus, message) {
           $("#statustext").text("Save failed: "+message);
@@ -561,8 +608,6 @@ $.couch.app(function(app) {
     }
     else{
       rackAudioOn=true;
-      $("#rackaudiobutton").css('color', 'red');
-      $(".rackaudiobutton").css('color', 'red');
       $("#rackaudiobutton").text("Rack Audio Alarm On");
       $(".rackaudiobutton").text("Rack Audio Alarm On");
       $("#rackaudio").get(0).muted=false;
@@ -580,14 +625,13 @@ $.couch.app(function(app) {
     }
     else{
       rackAudioOn=true;
-      $("#rackaudiobutton").css('color', 'red');
-      $(".rackaudiobutton").css('color', 'red');
       $("#rackaudiobutton").text("Rack Audio Alarm On");
       $(".rackaudiobutton").text("Rack Audio Alarm On");
       $("#rackaudio").get(0).muted=false;
     }
   });
 
+    
   $("#colorblindbutton").click(function(){
     if (colorblindModeOn==true){
       colorblindModeOn=false;
@@ -625,7 +669,8 @@ $.couch.app(function(app) {
     retrievePresentThresholds(true);
     waitCheck(checking);
   });
-
-
-
+//while(true){
+//  setTimeout(function(){},5000);
+//};
+//alert("Hello")
 });
