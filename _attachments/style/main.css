@@ -13,22 +13,18 @@ h1 {
 }
 .chartcontainer{
 position:relative;
-height:500px;
-}
-.detailchart{
-position:relative;
-width:100%;
+height:450px;
 }
 .masterchart{
 position:relative;
-top:300px;
-height:80px;
-width:100%;
+height:400px;
+min-width:310px;
 }
 .box{
 /*background-color:green;*/
 border:1px solid #000;
 float:left;
+text-shadow:none;
 }
 .timetable{
 border:1px solid #000;
@@ -36,13 +32,13 @@ float:left;
 }
 .big{
 width:100px;
-height:61px;
+height:51px;
 float:left;
 text-align:center;
 }
 .inside{
 width:100%;
-height:25px;
+height:20px;
 float:left;
 text-align:center;
 clear:both;
@@ -69,7 +65,8 @@ text-align:center;
 width:120px;
 height:150px;
 /*background-color:green;*/
-border:1px solid #000; 
+border:1px solid #000;
+text-shadow:none;
 float:left;
 }
 .crates{
@@ -78,52 +75,64 @@ height:50px;
 margin-left:20px;
 margin-right:20px;
 /*background-color:green;*/
-border:1px solid #000; 
+border:1px solid #000;
+text-shadow:none; 
 float:left;
 }
-
+/*
 .header{
 width:100%;
 float:none;
 clear:both;
 }
+*/
 .channel{
 width:100%;
 float:none;
 clear:both;
 }
-.wideColumn {
-width:15em;
+.middleColumn {
+width:13em;
 float:left;
 clear:both;
+padding:2px;
+}
+.wideColumn {
+width:16em;
+/*float:left;
+clear:both;
+vertical-align: middle;
+padding:2px;*/
 }
 .wide {
 width:15em;
 }
 .niceButton{
-width:15em;
+width:20em;
 }
 
 .narrowColumn {
 width:6em;
-float:left;
+/*float:left;
+padding:2px;*/
 }
 .narrow{
-width:6em;
+width:5em;
 }
 .approved{
 display:none;
 color:green;
-height:24px;
 }
 .present{
 display:none;
 color:blue;
-height:24px;
 }
 .set{
 display:block;
-height:16px;
+}
+
+.red{
+color:red;
 }
 
 #profile {
@@ -161,13 +170,13 @@ height:16px;
   padding:8px;
   margin:4px 0;
 }
-
+/*
 form {
   padding:4px;
   margin:6px;
   background-color:#ddd;  
 }
-
+*/
 div.avatar {
   padding:2px;
   padding-bottom:0;
